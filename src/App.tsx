@@ -9,7 +9,7 @@ import Payments from "./pages/Payments";
 import Notifications from "./pages/Notifications";
 import Reports from "./pages/Reports";
 import './App.css';
-import { Toaster } from "./components/ui/toaster";
+import { Toaster } from "sonner";
 
 function App() {
   return (
@@ -24,7 +24,7 @@ function App() {
         <Route path="/reports" element={<Reports />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      <Toaster />
+      <Toaster position="top-right" />
     </>
   );
 }
