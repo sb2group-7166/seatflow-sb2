@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,35 +12,34 @@ interface SeatMapProps {
 }
 
 const SeatMap = ({ className }: SeatMapProps) => {
-  const [selectedZone, setSelectedZone] = useState("reading-area");
+  const [selectedZone, setSelectedZone] = useState("full-day");
   const [selectedShift, setSelectedShift] = useState("morning");
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   
   const generateSeatLayout = () => {
     const zones = {
-      "reading-area": createReadingAreaSeats(),
-      "computer-zone": createComputerZoneSeats(),
-      "quiet-study": createQuietStudySeats(),
-      "group-study": createGroupStudySeats(),
+      "full-day": createFullDaySeats(),
+      "half-day": createHalfDaySeats(),
     };
     
     return zones[selectedZone as keyof typeof zones];
   };
   
-  const createReadingAreaSeats = () => {
+  const createFullDaySeats = () => {
     const seats = [];
     const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
     
-    for (let row = 1; row <= 8; row++) {
+    // Create 6 rows with 4 seats each row (total 48 seats for full day)
+    for (let row = 1; row <= 12; row++) {
       const rowSeats = [];
       
       for (let col = 1; col <= 4; col++) {
-        const seatId = `RA-${row}-${col}`;
+        const seatId = `F-${row}-${col}`;
         const randomStatus = statuses[Math.floor(Math.random() * (row === 1 ? 2 : 4))] as SeatStatus;
         
         rowSeats.push({
           id: seatId,
-          number: `${row}${String.fromCharCode(64 + col)}`,
+          number: `F${row}${String.fromCharCode(64 + col)}`,
           status: randomStatus,
           user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
           timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
@@ -52,73 +52,22 @@ const SeatMap = ({ className }: SeatMapProps) => {
     return seats;
   };
   
-  const createComputerZoneSeats = () => {
+  const createHalfDaySeats = () => {
     const seats = [];
     const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
     
-    for (let row = 1; row <= 8; row++) {
+    // Create 12-13 rows with 4 seats each (total 50 seats for half day)
+    for (let row = 1; row <= 13; row++) {
       const rowSeats = [];
-      
-      for (let col = 1; col <= 3; col++) {
-        const seatId = `CZ-${row}-${col}`;
-        const randomStatus = statuses[Math.floor(Math.random() * 4)] as SeatStatus;
-        
-        rowSeats.push({
-          id: seatId,
-          number: `C${row}${col}`,
-          status: randomStatus,
-          user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
-          timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
-        });
-      }
-      
-      seats.push(rowSeats);
-    }
-    
-    return seats;
-  };
-  
-  const createQuietStudySeats = () => {
-    const seats = [];
-    const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
-    
-    for (let row = 1; row <= 10; row++) {
-      const rowSeats = [];
-      const seatsPerRow = row <= 6 ? 3 : 3;
+      const seatsPerRow = row === 13 ? 2 : 4; // Last row has only 2 seats to reach 50 total
       
       for (let col = 1; col <= seatsPerRow; col++) {
-        const seatId = `QS-${row}-${col}`;
+        const seatId = `H-${row}-${col}`;
         const randomStatus = statuses[Math.floor(Math.random() * 4)] as SeatStatus;
         
         rowSeats.push({
           id: seatId,
-          number: `Q${row}${col}`,
-          status: randomStatus,
-          user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
-          timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
-        });
-      }
-      
-      seats.push(rowSeats);
-    }
-    
-    return seats;
-  };
-  
-  const createGroupStudySeats = () => {
-    const seats = [];
-    const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
-    
-    for (let row = 1; row <= 3; row++) {
-      const rowSeats = [];
-      
-      for (let col = 1; col <= 4; col++) {
-        const seatId = `GS-${row}-${col}`;
-        const randomStatus = statuses[Math.floor(Math.random() * 4)] as SeatStatus;
-        
-        rowSeats.push({
-          id: seatId,
-          number: `G${row}${col}`,
+          number: `H${row}${col}`,
           status: randomStatus,
           user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
           timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
@@ -160,10 +109,8 @@ const SeatMap = ({ className }: SeatMapProps) => {
               <SelectValue placeholder="Select zone" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="reading-area">Reading Area (32)</SelectItem>
-              <SelectItem value="computer-zone">Computer Zone (24)</SelectItem>
-              <SelectItem value="quiet-study">Quiet Study (30)</SelectItem>
-              <SelectItem value="group-study">Group Study (12)</SelectItem>
+              <SelectItem value="full-day">Full Day Seats (48)</SelectItem>
+              <SelectItem value="half-day">Half Day Seats (50)</SelectItem>
             </SelectContent>
           </Select>
           
@@ -211,7 +158,8 @@ const SeatMap = ({ className }: SeatMapProps) => {
                     key={seat.id}
                     className={cn(
                       "w-12 h-12 rounded-t-lg border-2 flex items-center justify-center relative transition-all",
-                      seat.status === "available" && "border-green-500 bg-green-50 hover:bg-green-100",
+                      selectedZone === "full-day" ? "border-purple-500 bg-purple-50 hover:bg-purple-100" : "border-yellow-500 bg-yellow-50 hover:bg-yellow-100",
+                      seat.status === "available" && "bg-green-50 hover:bg-green-100",
                       seat.status === "occupied" && "border-red-500 bg-red-50 cursor-not-allowed",
                       seat.status === "reserved" && "border-amber-500 bg-amber-50 cursor-not-allowed",
                       seat.status === "maintenance" && "border-slate-400 bg-slate-100 cursor-not-allowed",
@@ -223,6 +171,7 @@ const SeatMap = ({ className }: SeatMapProps) => {
                     <Sofa 
                       className={cn(
                         "h-6 w-6",
+                        selectedZone === "full-day" ? "text-purple-600" : "text-yellow-600",
                         seat.status === "available" && "text-green-600",
                         seat.status === "occupied" && "text-red-600",
                         seat.status === "reserved" && "text-amber-600",
@@ -249,7 +198,8 @@ const SeatMap = ({ className }: SeatMapProps) => {
                     key={seat.id}
                     className={cn(
                       "w-12 h-12 rounded-t-lg border-2 flex items-center justify-center relative transition-all",
-                      seat.status === "available" && "border-green-500 bg-green-50 hover:bg-green-100",
+                      selectedZone === "full-day" ? "border-purple-500 bg-purple-50 hover:bg-purple-100" : "border-yellow-500 bg-yellow-50 hover:bg-yellow-100",
+                      seat.status === "available" && "bg-green-50 hover:bg-green-100",
                       seat.status === "occupied" && "border-red-500 bg-red-50 cursor-not-allowed",
                       seat.status === "reserved" && "border-amber-500 bg-amber-50 cursor-not-allowed",
                       seat.status === "maintenance" && "border-slate-400 bg-slate-100 cursor-not-allowed",
@@ -261,6 +211,7 @@ const SeatMap = ({ className }: SeatMapProps) => {
                     <Sofa 
                       className={cn(
                         "h-6 w-6",
+                        selectedZone === "full-day" ? "text-purple-600" : "text-yellow-600",
                         seat.status === "available" && "text-green-600",
                         seat.status === "occupied" && "text-red-600",
                         seat.status === "reserved" && "text-amber-600",

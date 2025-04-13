@@ -4,7 +4,7 @@
 import { toast } from "sonner";
 
 export type SeatStatus = "available" | "occupied" | "reserved" | "maintenance";
-export type SeatZone = "reading-area" | "computer-zone" | "quiet-study" | "group-study";
+export type SeatZone = "full-day" | "half-day";
 
 export interface Seat {
   id: string;
@@ -20,16 +20,16 @@ export interface Seat {
 
 // Mock data
 const mockSeats: Seat[] = [
-  { id: "1", number: "A101", zone: "reading-area", floor: 1, status: "available" },
-  { id: "2", number: "A102", zone: "reading-area", floor: 1, status: "occupied", currentOccupant: "1" },
-  { id: "3", number: "A103", zone: "reading-area", floor: 1, status: "reserved", reservedBy: "2" },
-  { id: "4", number: "B201", zone: "computer-zone", floor: 2, status: "available" },
-  { id: "5", number: "B202", zone: "computer-zone", floor: 2, status: "maintenance" },
-  { id: "6", number: "C301", zone: "quiet-study", floor: 3, status: "available" },
-  { id: "7", number: "C302", zone: "quiet-study", floor: 3, status: "occupied", currentOccupant: "3" },
-  { id: "8", number: "D401", zone: "group-study", floor: 4, status: "available" },
-  { id: "9", number: "D402", zone: "group-study", floor: 4, status: "occupied", currentOccupant: "4" },
-  { id: "10", number: "D403", zone: "group-study", floor: 4, status: "reserved", reservedBy: "5" },
+  { id: "1", number: "F101", zone: "full-day", floor: 1, status: "available" },
+  { id: "2", number: "F102", zone: "full-day", floor: 1, status: "occupied", currentOccupant: "1" },
+  { id: "3", number: "F103", zone: "full-day", floor: 1, status: "reserved", reservedBy: "2" },
+  { id: "4", number: "H201", zone: "half-day", floor: 2, status: "available" },
+  { id: "5", number: "H202", zone: "half-day", floor: 2, status: "maintenance" },
+  { id: "6", number: "F301", zone: "full-day", floor: 3, status: "available" },
+  { id: "7", number: "H302", zone: "half-day", floor: 3, status: "occupied", currentOccupant: "3" },
+  { id: "8", number: "F401", zone: "full-day", floor: 4, status: "available" },
+  { id: "9", number: "H402", zone: "half-day", floor: 4, status: "occupied", currentOccupant: "4" },
+  { id: "10", number: "H403", zone: "half-day", floor: 4, status: "reserved", reservedBy: "5" },
 ];
 
 // Get all seats
