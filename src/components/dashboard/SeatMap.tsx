@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Chair } from "lucide-react";
+import { Sofa } from "lucide-react";
 import { Seat, SeatStatus } from "@/types";
 
 interface SeatMapProps {
@@ -16,7 +15,6 @@ const SeatMap = ({ className }: SeatMapProps) => {
   const [selectedShift, setSelectedShift] = useState("morning");
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   
-  // Create a layout with 98 seats in total
   const generateSeatLayout = () => {
     const zones = {
       "reading-area": createReadingAreaSeats(),
@@ -28,7 +26,6 @@ const SeatMap = ({ className }: SeatMapProps) => {
     return zones[selectedZone as keyof typeof zones];
   };
   
-  // Reading area: 32 seats (8 rows of 4)
   const createReadingAreaSeats = () => {
     const seats = [];
     const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
@@ -55,7 +52,6 @@ const SeatMap = ({ className }: SeatMapProps) => {
     return seats;
   };
   
-  // Computer zone: 24 seats (8 rows of 3)
   const createComputerZoneSeats = () => {
     const seats = [];
     const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
@@ -82,7 +78,6 @@ const SeatMap = ({ className }: SeatMapProps) => {
     return seats;
   };
   
-  // Quiet study: 30 seats (6 rows of 3 + 4 rows of 3)
   const createQuietStudySeats = () => {
     const seats = [];
     const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
@@ -110,7 +105,6 @@ const SeatMap = ({ className }: SeatMapProps) => {
     return seats;
   };
   
-  // Group study: 12 seats (3 rows of 4)
   const createGroupStudySeats = () => {
     const seats = [];
     const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
@@ -206,14 +200,11 @@ const SeatMap = ({ className }: SeatMapProps) => {
       <div className="flex flex-col gap-8 max-w-5xl mx-auto">
         {seatRows.map((row, rowIndex) => (
           <div key={rowIndex} className="relative">
-            {/* Row label */}
             <div className="absolute -left-8 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
               {rowIndex + 1}
             </div>
             
-            {/* Seats */}
             <div className="flex justify-center gap-6">
-              {/* First half of the row */}
               <div className="flex gap-2">
                 {row.slice(0, Math.ceil(row.length / 2)).map((seat) => (
                   <button
@@ -229,7 +220,7 @@ const SeatMap = ({ className }: SeatMapProps) => {
                     onClick={() => seat.status === "available" && toggleSeatSelection(seat.id)}
                     disabled={seat.status !== "available"}
                   >
-                    <Chair 
+                    <Sofa 
                       className={cn(
                         "h-6 w-6",
                         seat.status === "available" && "text-green-600",
@@ -250,10 +241,8 @@ const SeatMap = ({ className }: SeatMapProps) => {
                 ))}
               </div>
               
-              {/* Aisle space */}
               <div className="w-8 border-t-2 border-dashed border-slate-200 self-center"></div>
               
-              {/* Second half of the row */}
               <div className="flex gap-2">
                 {row.slice(Math.ceil(row.length / 2)).map((seat) => (
                   <button
@@ -269,7 +258,7 @@ const SeatMap = ({ className }: SeatMapProps) => {
                     onClick={() => seat.status === "available" && toggleSeatSelection(seat.id)}
                     disabled={seat.status !== "available"}
                   >
-                    <Chair 
+                    <Sofa 
                       className={cn(
                         "h-6 w-6",
                         seat.status === "available" && "text-green-600",
