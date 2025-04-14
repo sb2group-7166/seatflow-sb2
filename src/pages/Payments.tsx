@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDateForApi } from "@/lib/api-utils";
 
 // Mock payment data
 const payments = [
@@ -84,6 +85,26 @@ const PaymentsPage = () => {
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Filter payments based on search query
+  const filteredPayments = payments.filter((payment) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      payment.studentName.toLowerCase().includes(query) ||
+      payment.studentId.toLowerCase().includes(query) ||
+      payment.id.toLowerCase().includes(query) ||
+      payment.description?.toLowerCase().includes(query) ||
+      payment.method?.toLowerCase().includes(query)
+    );
+  });
+
+  // Paginate payments
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentPayments = filteredPayments.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
 
   // Format Indian Rupee
   const formatRupee = (amount: number) => {
@@ -120,6 +141,14 @@ const PaymentsPage = () => {
       title: `Export to ${format.toUpperCase()}`,
       description: `Your data has been exported to ${format.toUpperCase()} format.`,
     });
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
   return (
@@ -229,7 +258,7 @@ const PaymentsPage = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {payments.map((payment) => (
+                      {currentPayments.map((payment) => (
                         <TableRow key={payment.id}>
                           <TableCell className="font-medium">{payment.id}</TableCell>
                           <TableCell>
@@ -256,11 +285,25 @@ const PaymentsPage = () => {
                 
                 <div className="flex items-center justify-between space-x-2 py-4">
                   <div className="text-sm text-muted-foreground">
-                    Showing <span className="font-medium">5</span> of <span className="font-medium">25</span> results
+                    Showing <span className="font-medium">{Math.min(filteredPayments.length, indexOfFirstItem + 1)}-{Math.min(indexOfLastItem, filteredPayments.length)}</span> of <span className="font-medium">{filteredPayments.length}</span> results
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">Previous</Button>
-                    <Button variant="outline" size="sm">Next</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                    >
+                      Next
+                    </Button>
                   </div>
                 </div>
               </CardContent>
