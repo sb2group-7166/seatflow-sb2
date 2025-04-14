@@ -5,76 +5,69 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Sofa } from "lucide-react";
-import { Seat, SeatStatus } from "@/types";
+
+// Define types for seat within this component
+interface Seat {
+  id: string;
+  number: string;
+  status: "available" | "occupied" | "reserved" | "maintenance";
+  user?: string;
+  timeRemaining?: number;
+}
 
 interface SeatMapProps {
   className?: string;
 }
 
 const SeatMap = ({ className }: SeatMapProps) => {
-  const [selectedZone, setSelectedZone] = useState("full-day");
   const [selectedShift, setSelectedShift] = useState("morning");
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   
   const generateSeatLayout = () => {
-    const zones = {
-      "full-day": createFullDaySeats(),
-      "half-day": createHalfDaySeats(),
-    };
-    
-    return zones[selectedZone as keyof typeof zones];
+    // Generate a layout of 98 seats with 7 columns (3 on left, 4 on right)
+    return createSeats();
   };
   
-  const createFullDaySeats = () => {
+  const createSeats = () => {
     const seats = [];
-    const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
+    const statuses = ["available", "occupied", "reserved", "maintenance"];
     
-    // Create 6 rows with 4 seats each row (total 48 seats for full day)
-    for (let row = 1; row <= 12; row++) {
-      const rowSeats = [];
+    // Create 14 rows with 7 seats each (3 on the left, 4 on the right)
+    // This gives us 98 seats total
+    for (let row = 1; row <= 14; row++) {
+      const leftRowSeats = [];
+      const rightRowSeats = [];
       
+      // Left section - 3 columns
+      for (let col = 1; col <= 3; col++) {
+        const seatId = `L-${row}-${col}`;
+        // First row has higher chance of available seats
+        const randomStatus = statuses[Math.floor(Math.random() * (row === 1 ? 2 : 4))] as "available" | "occupied" | "reserved" | "maintenance";
+        
+        leftRowSeats.push({
+          id: seatId,
+          number: `L${row}${col}`,
+          status: randomStatus,
+          user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
+          timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
+        });
+      }
+      
+      // Right section - 4 columns
       for (let col = 1; col <= 4; col++) {
-        const seatId = `F-${row}-${col}`;
-        const randomStatus = statuses[Math.floor(Math.random() * (row === 1 ? 2 : 4))] as SeatStatus;
+        const seatId = `R-${row}-${col}`;
+        const randomStatus = statuses[Math.floor(Math.random() * 4)] as "available" | "occupied" | "reserved" | "maintenance";
         
-        rowSeats.push({
+        rightRowSeats.push({
           id: seatId,
-          number: `F${row}${String.fromCharCode(64 + col)}`,
+          number: `R${row}${col}`,
           status: randomStatus,
           user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
           timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
         });
       }
       
-      seats.push(rowSeats);
-    }
-    
-    return seats;
-  };
-  
-  const createHalfDaySeats = () => {
-    const seats = [];
-    const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
-    
-    // Create 12-13 rows with 4 seats each (total 50 seats for half day)
-    for (let row = 1; row <= 13; row++) {
-      const rowSeats = [];
-      const seatsPerRow = row === 13 ? 2 : 4; // Last row has only 2 seats to reach 50 total
-      
-      for (let col = 1; col <= seatsPerRow; col++) {
-        const seatId = `H-${row}-${col}`;
-        const randomStatus = statuses[Math.floor(Math.random() * 4)] as SeatStatus;
-        
-        rowSeats.push({
-          id: seatId,
-          number: `H${row}${col}`,
-          status: randomStatus,
-          user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
-          timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
-        });
-      }
-      
-      seats.push(rowSeats);
+      seats.push({ leftRowSeats, rightRowSeats });
     }
     
     return seats;
@@ -104,16 +97,6 @@ const SeatMap = ({ className }: SeatMapProps) => {
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3">
-          <Select value={selectedZone} onValueChange={setSelectedZone}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select zone" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="full-day">Full Day Seats (48)</SelectItem>
-              <SelectItem value="half-day">Half Day Seats (50)</SelectItem>
-            </SelectContent>
-          </Select>
-          
           <Select value={selectedShift} onValueChange={setSelectedShift}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select shift" />
@@ -144,21 +127,22 @@ const SeatMap = ({ className }: SeatMapProps) => {
         </div>
       </div>
       
-      <div className="flex flex-col gap-8 max-w-5xl mx-auto">
+      <div className="flex flex-col gap-8 max-w-6xl mx-auto">
         {seatRows.map((row, rowIndex) => (
           <div key={rowIndex} className="relative">
             <div className="absolute -left-8 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
               {rowIndex + 1}
             </div>
             
-            <div className="flex justify-center gap-6">
-              <div className="flex gap-2">
-                {row.slice(0, Math.ceil(row.length / 2)).map((seat) => (
+            <div className="grid grid-cols-9 gap-2">
+              {/* Left section - 3 columns */}
+              <div className="col-span-3 grid grid-cols-3 gap-2">
+                {row.leftRowSeats.map((seat) => (
                   <button
                     key={seat.id}
                     className={cn(
                       "w-12 h-12 rounded-t-lg border-2 flex items-center justify-center relative transition-all",
-                      selectedZone === "full-day" ? "border-purple-500 bg-purple-50 hover:bg-purple-100" : "border-yellow-500 bg-yellow-50 hover:bg-yellow-100",
+                      "border-blue-500 bg-blue-50 hover:bg-blue-100",
                       seat.status === "available" && "bg-green-50 hover:bg-green-100",
                       seat.status === "occupied" && "border-red-500 bg-red-50 cursor-not-allowed",
                       seat.status === "reserved" && "border-amber-500 bg-amber-50 cursor-not-allowed",
@@ -171,7 +155,7 @@ const SeatMap = ({ className }: SeatMapProps) => {
                     <Sofa 
                       className={cn(
                         "h-6 w-6",
-                        selectedZone === "full-day" ? "text-purple-600" : "text-yellow-600",
+                        "text-blue-600",
                         seat.status === "available" && "text-green-600",
                         seat.status === "occupied" && "text-red-600",
                         seat.status === "reserved" && "text-amber-600",
@@ -190,15 +174,19 @@ const SeatMap = ({ className }: SeatMapProps) => {
                 ))}
               </div>
               
-              <div className="w-8 border-t-2 border-dashed border-slate-200 self-center"></div>
+              {/* Middle gap - 2 columns */}
+              <div className="col-span-2 flex items-center justify-center">
+                <div className="w-full h-0.5 border-t-2 border-dashed border-slate-200"></div>
+              </div>
               
-              <div className="flex gap-2">
-                {row.slice(Math.ceil(row.length / 2)).map((seat) => (
+              {/* Right section - 4 columns */}
+              <div className="col-span-4 grid grid-cols-4 gap-2">
+                {row.rightRowSeats.map((seat) => (
                   <button
                     key={seat.id}
                     className={cn(
                       "w-12 h-12 rounded-t-lg border-2 flex items-center justify-center relative transition-all",
-                      selectedZone === "full-day" ? "border-purple-500 bg-purple-50 hover:bg-purple-100" : "border-yellow-500 bg-yellow-50 hover:bg-yellow-100",
+                      "border-purple-500 bg-purple-50 hover:bg-purple-100",
                       seat.status === "available" && "bg-green-50 hover:bg-green-100",
                       seat.status === "occupied" && "border-red-500 bg-red-50 cursor-not-allowed",
                       seat.status === "reserved" && "border-amber-500 bg-amber-50 cursor-not-allowed",
@@ -211,7 +199,7 @@ const SeatMap = ({ className }: SeatMapProps) => {
                     <Sofa 
                       className={cn(
                         "h-6 w-6",
-                        selectedZone === "full-day" ? "text-purple-600" : "text-yellow-600",
+                        "text-purple-600",
                         seat.status === "available" && "text-green-600",
                         seat.status === "occupied" && "text-red-600",
                         seat.status === "reserved" && "text-amber-600",
