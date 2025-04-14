@@ -149,7 +149,10 @@ const ShiftSchedule = ({ className }: ShiftScheduleProps) => {
                       {shift.currentOccupancy.includes('(80%)') || 
                        shift.currentOccupancy.includes('(82%)') || 
                        shift.currentOccupancy.includes('(87%)') ? (
-                        <AlertCircle className="ml-2 h-4 w-4 text-amber-500" title="High occupancy" />
+                        <span className="ml-2 flex items-center">
+                          <AlertCircle className="h-4 w-4 text-amber-500" aria-label="High occupancy" />
+                          <span className="sr-only">High occupancy</span>
+                        </span>
                       ) : null}
                     </div>
                   </TableCell>
