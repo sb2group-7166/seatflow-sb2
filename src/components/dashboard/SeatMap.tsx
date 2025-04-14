@@ -102,9 +102,11 @@ const SeatMap = ({ className }: SeatMapProps) => {
               <SelectValue placeholder="Select shift" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="morning">Morning (8AM-1PM)</SelectItem>
-              <SelectItem value="afternoon">Afternoon (1PM-6PM)</SelectItem>
-              <SelectItem value="evening">Evening (6PM-11PM)</SelectItem>
+              <SelectItem value="morning">Morning (07AM-02PM)</SelectItem>
+              <SelectItem value="evening">Evening (02PM-10PM)</SelectItem>
+              <SelectItem value="lateEvening">Late Evening (02PM-12AM)</SelectItem>
+              <SelectItem value="fullDay1">Full Day (07AM-12AM)</SelectItem>
+              <SelectItem value="fullDay2">Full Day (07AM-10PM)</SelectItem>
             </SelectContent>
           </Select>
         </div>
