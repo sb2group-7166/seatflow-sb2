@@ -23,51 +23,61 @@ const SeatMap = ({ className }: SeatMapProps) => {
   const [selectedShift, setSelectedShift] = useState("morning");
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   
+  // Generate a layout of 98 seats with joined rows
   const generateSeatLayout = () => {
-    // Generate a layout of 98 seats with 7 columns (3 on left, 4 on right)
+    // Create 7 joined rows (pairs of original rows), with 14 seats per joined row
     return createSeats();
   };
   
   const createSeats = () => {
     const seats = [];
     const statuses = ["available", "occupied", "reserved", "maintenance"];
-    
-    // Create 14 rows with 7 seats each (3 on the left, 4 on the right)
-    // This gives us 98 seats total
-    for (let row = 1; row <= 14; row++) {
-      const leftRowSeats = [];
-      const rightRowSeats = [];
+    // Each joined row consists of 2 original rows
+    for (let joinedRow = 1; joinedRow <= 7; joinedRow++) {
+      const rowPair = [];
       
-      // Left section - 3 columns
-      for (let col = 1; col <= 3; col++) {
-        const seatId = `L-${row}-${col}`;
-        // First row has higher chance of available seats
-        const randomStatus = statuses[Math.floor(Math.random() * (row === 1 ? 2 : 4))] as "available" | "occupied" | "reserved" | "maintenance";
+      // Process each pair of rows (e.g., rows 1-2, 3-4, etc.)
+      for (let rowInPair = 0; rowInPair < 2; rowInPair++) {
+        const originalRow = (joinedRow - 1) * 2 + rowInPair + 1;
+        const leftRowSeats = [];
+        const rightRowSeats = [];
         
-        leftRowSeats.push({
-          id: seatId,
-          number: `L${row}${col}`,
-          status: randomStatus,
-          user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
-          timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
-        });
+        // Right section - 4 columns (first, numbered 1-7 in first row)
+        for (let col = 1; col <= 4; col++) {
+          const seatNumber = rowInPair === 0 && joinedRow === 1 ? col : null; // First 7 seats are on right side
+          const seatId = `R-${originalRow}-${col}`;
+          const randomStatus = statuses[Math.floor(Math.random() * 4)] as "available" | "occupied" | "reserved" | "maintenance";
+          
+          rightRowSeats.push({
+            id: seatId,
+            // Seats 1-7 are on the right side of the first row
+            number: seatNumber ? `${seatNumber}` : `${(originalRow - 1) * 7 + col + 4}`,
+            status: randomStatus,
+            user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
+            timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
+          });
+        }
+        
+        // Left section - 3 columns (first, numbered 5-7 in first row)
+        for (let col = 1; col <= 3; col++) {
+          const seatNumber = rowInPair === 0 && joinedRow === 1 ? col + 4 : null; // First 7 seats continue on left side
+          const seatId = `L-${originalRow}-${col}`;
+          const randomStatus = statuses[Math.floor(Math.random() * 4)] as "available" | "occupied" | "reserved" | "maintenance";
+          
+          leftRowSeats.push({
+            id: seatId,
+            // Seats 8-14 are on the left side (continuing from right side)
+            number: seatNumber ? `${seatNumber}` : `${(originalRow - 1) * 7 + col + 4 + 3}`,
+            status: randomStatus,
+            user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
+            timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
+          });
+        }
+        
+        rowPair.push({ leftRowSeats, rightRowSeats, rowNumber: originalRow });
       }
       
-      // Right section - 4 columns
-      for (let col = 1; col <= 4; col++) {
-        const seatId = `R-${row}-${col}`;
-        const randomStatus = statuses[Math.floor(Math.random() * 4)] as "available" | "occupied" | "reserved" | "maintenance";
-        
-        rightRowSeats.push({
-          id: seatId,
-          number: `R${row}${col}`,
-          status: randomStatus,
-          user: randomStatus === "occupied" || randomStatus === "reserved" ? `Student #${Math.floor(Math.random() * 1000) + 1000}` : undefined,
-          timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined
-        });
-      }
-      
-      seats.push({ leftRowSeats, rightRowSeats });
+      seats.push({ rowPair, joinedRowNumber: joinedRow });
     }
     
     return seats;
@@ -130,95 +140,99 @@ const SeatMap = ({ className }: SeatMapProps) => {
       </div>
       
       <div className="flex flex-col gap-8 max-w-6xl mx-auto">
-        {seatRows.map((row, rowIndex) => (
-          <div key={rowIndex} className="relative">
-            <div className="absolute -left-8 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
-              {rowIndex + 1}
+        {seatRows.map((joinedRow) => (
+          <div key={joinedRow.joinedRowNumber} className="relative">
+            <div className="absolute -left-10 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
+              {joinedRow.joinedRowNumber * 2 - 1}-{joinedRow.joinedRowNumber * 2}
             </div>
             
-            <div className="grid grid-cols-9 gap-2">
-              {/* Left section - 3 columns */}
-              <div className="col-span-3 grid grid-cols-3 gap-2">
-                {row.leftRowSeats.map((seat) => (
-                  <button
-                    key={seat.id}
-                    className={cn(
-                      "w-12 h-12 rounded-t-lg border-2 flex items-center justify-center relative transition-all",
-                      "border-blue-500 bg-blue-50 hover:bg-blue-100",
-                      seat.status === "available" && "bg-green-50 hover:bg-green-100",
-                      seat.status === "occupied" && "border-red-500 bg-red-50 cursor-not-allowed",
-                      seat.status === "reserved" && "border-amber-500 bg-amber-50 cursor-not-allowed",
-                      seat.status === "maintenance" && "border-slate-400 bg-slate-100 cursor-not-allowed",
-                      selectedSeats.includes(seat.id) && "ring-2 ring-blue-500 ring-offset-2"
-                    )}
-                    onClick={() => seat.status === "available" && toggleSeatSelection(seat.id)}
-                    disabled={seat.status !== "available"}
-                  >
-                    <Sofa 
-                      className={cn(
-                        "h-6 w-6",
-                        "text-blue-600",
-                        seat.status === "available" && "text-green-600",
-                        seat.status === "occupied" && "text-red-600",
-                        seat.status === "reserved" && "text-amber-600",
-                        seat.status === "maintenance" && "text-slate-500",
-                      )} 
-                    />
-                    <span className="absolute -bottom-6 left-0 right-0 text-xs font-medium">
-                      {seat.number}
-                    </span>
-                    {seat.status === "reserved" && seat.timeRemaining && (
-                      <span className="absolute -top-6 left-0 right-0 text-[10px] text-amber-600 font-medium">
-                        {seat.timeRemaining}m
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Middle gap - 2 columns */}
-              <div className="col-span-2 flex items-center justify-center">
-                <div className="w-full h-0.5 border-t-2 border-dashed border-slate-200"></div>
-              </div>
-              
-              {/* Right section - 4 columns */}
-              <div className="col-span-4 grid grid-cols-4 gap-2">
-                {row.rightRowSeats.map((seat) => (
-                  <button
-                    key={seat.id}
-                    className={cn(
-                      "w-12 h-12 rounded-t-lg border-2 flex items-center justify-center relative transition-all",
-                      "border-purple-500 bg-purple-50 hover:bg-purple-100",
-                      seat.status === "available" && "bg-green-50 hover:bg-green-100",
-                      seat.status === "occupied" && "border-red-500 bg-red-50 cursor-not-allowed",
-                      seat.status === "reserved" && "border-amber-500 bg-amber-50 cursor-not-allowed",
-                      seat.status === "maintenance" && "border-slate-400 bg-slate-100 cursor-not-allowed",
-                      selectedSeats.includes(seat.id) && "ring-2 ring-blue-500 ring-offset-2"
-                    )}
-                    onClick={() => seat.status === "available" && toggleSeatSelection(seat.id)}
-                    disabled={seat.status !== "available"}
-                  >
-                    <Sofa 
-                      className={cn(
-                        "h-6 w-6",
-                        "text-purple-600",
-                        seat.status === "available" && "text-green-600",
-                        seat.status === "occupied" && "text-red-600",
-                        seat.status === "reserved" && "text-amber-600",
-                        seat.status === "maintenance" && "text-slate-500",
-                      )} 
-                    />
-                    <span className="absolute -bottom-6 left-0 right-0 text-xs font-medium">
-                      {seat.number}
-                    </span>
-                    {seat.status === "reserved" && seat.timeRemaining && (
-                      <span className="absolute -top-6 left-0 right-0 text-[10px] text-amber-600 font-medium">
-                        {seat.timeRemaining}m
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
+            <div className="space-y-6">
+              {joinedRow.rowPair.map((row, rowIdx) => (
+                <div key={`row-${row.rowNumber}`} className="grid grid-cols-9 gap-2">
+                  {/* Right section - 4 columns (shown first in the layout) */}
+                  <div className="col-span-4 grid grid-cols-4 gap-2">
+                    {row.rightRowSeats.map((seat) => (
+                      <button
+                        key={seat.id}
+                        className={cn(
+                          "w-12 h-12 rounded-t-lg border-2 flex items-center justify-center relative transition-all",
+                          "border-purple-500 bg-purple-50 hover:bg-purple-100",
+                          seat.status === "available" && "bg-green-50 hover:bg-green-100",
+                          seat.status === "occupied" && "border-red-500 bg-red-50 cursor-not-allowed",
+                          seat.status === "reserved" && "border-amber-500 bg-amber-50 cursor-not-allowed",
+                          seat.status === "maintenance" && "border-slate-400 bg-slate-100 cursor-not-allowed",
+                          selectedSeats.includes(seat.id) && "ring-2 ring-blue-500 ring-offset-2"
+                        )}
+                        onClick={() => seat.status === "available" && toggleSeatSelection(seat.id)}
+                        disabled={seat.status !== "available"}
+                      >
+                        <Sofa 
+                          className={cn(
+                            "h-6 w-6",
+                            "text-purple-600",
+                            seat.status === "available" && "text-green-600",
+                            seat.status === "occupied" && "text-red-600",
+                            seat.status === "reserved" && "text-amber-600",
+                            seat.status === "maintenance" && "text-slate-500",
+                          )} 
+                        />
+                        <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
+                          {seat.number}
+                        </span>
+                        {seat.status === "reserved" && seat.timeRemaining && (
+                          <span className="absolute -top-6 left-0 right-0 text-[10px] text-amber-600 font-medium">
+                            {seat.timeRemaining}m
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Middle gap - 2 columns */}
+                  <div className="col-span-2 flex items-center justify-center">
+                    <div className="w-full h-0.5 border-t-2 border-dashed border-slate-200"></div>
+                  </div>
+                  
+                  {/* Left section - 3 columns */}
+                  <div className="col-span-3 grid grid-cols-3 gap-2">
+                    {row.leftRowSeats.map((seat) => (
+                      <button
+                        key={seat.id}
+                        className={cn(
+                          "w-12 h-12 rounded-t-lg border-2 flex items-center justify-center relative transition-all",
+                          "border-blue-500 bg-blue-50 hover:bg-blue-100",
+                          seat.status === "available" && "bg-green-50 hover:bg-green-100",
+                          seat.status === "occupied" && "border-red-500 bg-red-50 cursor-not-allowed",
+                          seat.status === "reserved" && "border-amber-500 bg-amber-50 cursor-not-allowed",
+                          seat.status === "maintenance" && "border-slate-400 bg-slate-100 cursor-not-allowed",
+                          selectedSeats.includes(seat.id) && "ring-2 ring-blue-500 ring-offset-2"
+                        )}
+                        onClick={() => seat.status === "available" && toggleSeatSelection(seat.id)}
+                        disabled={seat.status !== "available"}
+                      >
+                        <Sofa 
+                          className={cn(
+                            "h-6 w-6",
+                            "text-blue-600",
+                            seat.status === "available" && "text-green-600",
+                            seat.status === "occupied" && "text-red-600",
+                            seat.status === "reserved" && "text-amber-600",
+                            seat.status === "maintenance" && "text-slate-500",
+                          )} 
+                        />
+                        <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
+                          {seat.number}
+                        </span>
+                        {seat.status === "reserved" && seat.timeRemaining && (
+                          <span className="absolute -top-6 left-0 right-0 text-[10px] text-amber-600 font-medium">
+                            {seat.timeRemaining}m
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}

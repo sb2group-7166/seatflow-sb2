@@ -45,7 +45,7 @@ import {
   Mail,
   Phone,
   Calendar,
-  School,
+  Upload,
   User,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,12 +60,9 @@ const studentFormSchema = z.object({
   studentId: z.string().min(5, {
     message: "Student ID must be at least 5 characters.",
   }),
-  year: z.string(),
   phone: z.string().optional(),
-  department: z.string().min(2, {
-    message: "Department must be at least 2 characters.",
-  }),
   status: z.enum(["active", "pending", "banned"]),
+  // We don't validate file uploads in the schema as they're handled separately
 });
 
 const StudentsPage = () => {
@@ -76,6 +73,8 @@ const StudentsPage = () => {
   }>(null);
   
   const { toast } = useToast();
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [idProof, setIdProof] = useState<File | null>(null);
 
   const form = useForm<z.infer<typeof studentFormSchema>>({
     resolver: zodResolver(studentFormSchema),
@@ -83,9 +82,7 @@ const StudentsPage = () => {
       name: "",
       email: "",
       studentId: "",
-      year: "1st Year",
       phone: "",
-      department: "",
       status: "active",
     },
   });
@@ -95,17 +92,33 @@ const StudentsPage = () => {
       title: "Student Added",
       description: `Student "${values.name}" has been added successfully.`,
     });
-    console.log(values);
+    console.log({
+      ...values,
+      profilePhoto: profilePhoto ? profilePhoto.name : null,
+      idProof: idProof ? idProof.name : null
+    });
     form.reset();
+    setProfilePhoto(null);
+    setIdProof(null);
   }
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setProfilePhoto(e.target.files[0]);
+    }
+  };
+
+  const handleIdProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setIdProof(e.target.files[0]);
+    }
+  };
 
   // Mock student details data
   const studentDetails = {
     name: "Alex Johnson",
     email: "alex.j@example.edu",
     id: "STU1001",
-    department: "Computer Science",
-    year: "3rd Year",
     joinedOn: "September 15, 2023",
     lastActive: "April 10, 2023 (10:30 AM)",
     status: "active",
@@ -189,49 +202,10 @@ const StudentsPage = () => {
 
                       <FormField
                         control={form.control}
-                        name="department"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Department</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Computer Science" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="year"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Year</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select year" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="1st Year">1st Year</SelectItem>
-                                <SelectItem value="2nd Year">2nd Year</SelectItem>
-                                <SelectItem value="3rd Year">3rd Year</SelectItem>
-                                <SelectItem value="4th Year">4th Year</SelectItem>
-                                <SelectItem value="5th Year">5th Year</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Phone (Optional)</FormLabel>
+                            <FormLabel>Phone</FormLabel>
                             <FormControl>
                               <Input placeholder="+1 123-456-7890" {...field} />
                             </FormControl>
@@ -239,6 +213,55 @@ const StudentsPage = () => {
                           </FormItem>
                         )}
                       />
+
+                      <FormItem>
+                        <FormLabel>Profile Photo</FormLabel>
+                        <div className="flex items-center gap-4">
+                          <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                            {profilePhoto ? (
+                              <img 
+                                src={URL.createObjectURL(profilePhoto)} 
+                                alt="Profile Preview" 
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <User className="h-8 w-8 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <Input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={handleProfilePhotoChange}
+                            />
+                            <FormDescription>
+                              Upload a profile photo (JPG or PNG).
+                            </FormDescription>
+                          </div>
+                        </div>
+                      </FormItem>
+
+                      <FormItem>
+                        <FormLabel>Upload ID</FormLabel>
+                        <div className="flex items-center gap-4">
+                          <Upload className={`h-8 w-8 ${idProof ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <div className="flex-1">
+                            <Input 
+                              type="file" 
+                              accept=".pdf,.jpg,.jpeg,.png" 
+                              onChange={handleIdProofChange}
+                            />
+                            <FormDescription>
+                              Upload a valid ID document (PDF, JPG or PNG).
+                            </FormDescription>
+                          </div>
+                        </div>
+                        {idProof && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Selected file: {idProof.name}
+                          </p>
+                        )}
+                      </FormItem>
 
                       <FormField
                         control={form.control}
@@ -272,100 +295,6 @@ const StudentsPage = () => {
                 </Form>
               </CardContent>
             </Card>
-            
-            {/* Student Detail View (can be opened from the table) */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="hidden">View Student</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[625px]">
-                <DialogHeader>
-                  <DialogTitle>Student Profile</DialogTitle>
-                  <DialogDescription>
-                    View detailed information about this student.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
-                  <div className="flex flex-col items-center justify-center col-span-1 border rounded-md p-4">
-                    <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                      <User className="h-12 w-12 text-primary" />
-                    </div>
-                    <h3 className="font-medium text-lg">{studentDetails.name}</h3>
-                    <p className="text-sm text-muted-foreground">{studentDetails.id}</p>
-                    <Badge className="mt-2" variant={studentDetails.status === "active" ? "default" : "destructive"}>
-                      {studentDetails.status}
-                    </Badge>
-                  </div>
-                  
-                  <div className="col-span-1 md:col-span-2 space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Email</p>
-                          <p className="text-sm">{studentDetails.email}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Phone</p>
-                          <p className="text-sm">{studentDetails.phone}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <School className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Department</p>
-                          <p className="text-sm">{studentDetails.department}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Joined On</p>
-                          <p className="text-sm">{studentDetails.joinedOn}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border-t pt-3">
-                      <h4 className="font-medium mb-2">Library Usage</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-muted/50 p-2 rounded">
-                          <p className="text-xs text-muted-foreground">Total Bookings</p>
-                          <p className="text-lg font-medium">{studentDetails.bookings}</p>
-                        </div>
-                        <div className="bg-muted/50 p-2 rounded">
-                          <p className="text-xs text-muted-foreground">Violations</p>
-                          <p className="text-lg font-medium">{studentDetails.violations}</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="border-t pt-3">
-                      <h4 className="font-medium mb-2">Last Activity</h4>
-                      <p className="text-sm">{studentDetails.lastActive}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button variant="outline" className="gap-2">
-                    <FileText className="h-4 w-4" />
-                    View History
-                  </Button>
-                  <Button variant="default" className="gap-2">
-                    <UserCheck className="h-4 w-4" />
-                    Edit Profile
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
           </TabsContent>
         </Tabs>
       </div>

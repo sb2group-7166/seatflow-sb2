@@ -1,11 +1,9 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatCard from "@/components/dashboard/StatCard";
-import SeatMap from "@/components/dashboard/SeatMap";
 import RevenueChart from "@/components/dashboard/RevenueChart";
 import OccupancyChart from "@/components/dashboard/OccupancyChart";
 import StudentTable from "@/components/dashboard/StudentTable";
-import ShiftSchedule from "@/components/dashboard/ShiftSchedule";
 import { 
   Users, 
   BookOpen, 
@@ -48,7 +46,9 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <SeatMap className="xl:col-span-2" />
+          <div className="xl:col-span-2">
+            <RevenueChart />
+          </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-6">
             <StatCard 
@@ -73,16 +73,8 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RevenueChart />
           <OccupancyChart />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6">
           <StudentTable />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6">
-          <ShiftSchedule />
         </div>
       </div>
     </DashboardLayout>

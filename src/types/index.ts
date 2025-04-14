@@ -12,3 +12,6 @@ export interface Seat {
 }
 
 export type SeatStatus = "available" | "occupied" | "reserved" | "maintenance";
+
+// Updated SeatZone to match the expected values in shifts.ts
+export type SeatZone = "full-day" | "half-day" | "reading-area" | "computer-zone" | "quiet-study" | "group-study";

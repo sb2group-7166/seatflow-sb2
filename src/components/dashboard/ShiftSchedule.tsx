@@ -27,12 +27,12 @@ interface ShiftScheduleProps {
   className?: string;
 }
 
-// Mock data for shifts
+// Updated mock data for shifts to align with SeatMap
 const shifts = [
   {
     id: "shift-1",
     name: "Morning",
-    timeRange: "8:00 AM - 1:00 PM",
+    timeRange: "07:00 AM - 02:00 PM",
     capacity: "120 seats",
     currentOccupancy: "85 seats (71%)",
     status: "active",
@@ -40,8 +40,8 @@ const shifts = [
   },
   {
     id: "shift-2",
-    name: "Afternoon",
-    timeRange: "1:00 PM - 6:00 PM",
+    name: "Evening",
+    timeRange: "02:00 PM - 10:00 PM",
     capacity: "120 seats",
     currentOccupancy: "98 seats (82%)",
     status: "active",
@@ -49,8 +49,8 @@ const shifts = [
   },
   {
     id: "shift-3",
-    name: "Evening",
-    timeRange: "6:00 PM - 11:00 PM",
+    name: "Late Evening",
+    timeRange: "02:00 PM - 12:00 AM",
     capacity: "90 seats",
     currentOccupancy: "78 seats (87%)",
     status: "active",
@@ -58,12 +58,21 @@ const shifts = [
   },
   {
     id: "shift-4",
-    name: "Weekend Extended",
-    timeRange: "10:00 AM - 8:00 PM",
+    name: "Full Day (12hr)",
+    timeRange: "07:00 AM - 10:00 PM",
+    capacity: "150 seats",
+    currentOccupancy: "120 seats (80%)",
+    status: "active",
+    staffAssigned: 5,
+  },
+  {
+    id: "shift-5",
+    name: "Full Day (17hr)",
+    timeRange: "07:00 AM - 12:00 AM",
     capacity: "150 seats",
     currentOccupancy: "0 seats (0%)",
     status: "inactive",
-    staffAssigned: 5,
+    staffAssigned: 6,
   },
 ];
 
@@ -130,10 +139,10 @@ const ShiftSchedule = ({ className }: ShiftScheduleProps) => {
           <h4 className="font-medium mb-2">Auto Seat Reallocation</h4>
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
             <Button variant="secondary" size="sm">
-              Reallocate Morning → Afternoon
+              Reallocate Morning → Evening
             </Button>
             <Button variant="secondary" size="sm">
-              Reallocate Afternoon → Evening
+              Reallocate Evening → Late Evening
             </Button>
             <Button variant="outline" size="sm">
               Configure Auto-Reallocation
