@@ -24,7 +24,7 @@ const mockShifts: Shift[] = [
     startTime: "08:00",
     endTime: "13:00",
     capacity: 120,
-    zone: "reading-area",
+    zone: "full-day",
     currentOccupancy: 85,
     staffAssigned: ["Staff 1", "Staff 2", "Staff 3"]
   },
@@ -34,7 +34,7 @@ const mockShifts: Shift[] = [
     startTime: "13:00",
     endTime: "18:00",
     capacity: 120,
-    zone: "reading-area",
+    zone: "full-day",
     currentOccupancy: 98,
     staffAssigned: ["Staff 4", "Staff 5", "Staff 6"]
   },
@@ -44,7 +44,7 @@ const mockShifts: Shift[] = [
     startTime: "18:00",
     endTime: "23:00",
     capacity: 100,
-    zone: "reading-area",
+    zone: "full-day",
     currentOccupancy: 42,
     staffAssigned: ["Staff 7", "Staff 8"]
   },
@@ -54,7 +54,7 @@ const mockShifts: Shift[] = [
     startTime: "08:00",
     endTime: "13:00",
     capacity: 50,
-    zone: "computer-zone",
+    zone: "half-day",
     currentOccupancy: 40,
     staffAssigned: ["Staff 9"]
   },
@@ -64,7 +64,7 @@ const mockShifts: Shift[] = [
     startTime: "09:00",
     endTime: "17:00",
     capacity: 30,
-    zone: "quiet-study",
+    zone: "half-day",
     currentOccupancy: 22,
     staffAssigned: ["Staff 10"]
   }
@@ -190,3 +190,4 @@ export const assignStaffToShift = async (shiftId: string, staffIds: string[]): P
     return false;
   }
 };
+
