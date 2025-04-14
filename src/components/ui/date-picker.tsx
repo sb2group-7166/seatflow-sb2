@@ -16,9 +16,19 @@ interface DatePickerProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   className?: string;
+  placeholder?: string;
+  dateFormat?: string;
+  disabled?: boolean;
 }
 
-export function DatePicker({ date, setDate, className }: DatePickerProps) {
+export function DatePicker({ 
+  date, 
+  setDate, 
+  className,
+  placeholder = "Pick a date",
+  dateFormat = "PPP",
+  disabled = false
+}: DatePickerProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -29,12 +39,13 @@ export function DatePicker({ date, setDate, className }: DatePickerProps) {
             !date && "text-muted-foreground",
             className
           )}
+          disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "PPP") : <span>Pick a date</span>}
+          {date ? format(date, dateFormat) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent className="w-auto p-0 z-50" align="start">
         <Calendar
           mode="single"
           selected={date}

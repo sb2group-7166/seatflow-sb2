@@ -19,9 +19,12 @@ import { Badge } from "@/components/ui/badge";
 import { 
   PencilLine, 
   Plus, 
-  ClockIcon 
+  ClockIcon, 
+  AlertCircle,
+  RotateCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface ShiftScheduleProps {
   className?: string;
@@ -77,6 +80,29 @@ const shifts = [
 ];
 
 const ShiftSchedule = ({ className }: ShiftScheduleProps) => {
+  const { toast } = useToast();
+
+  const handleAddNewShift = () => {
+    toast({
+      title: "New Shift",
+      description: "Add new shift form opened.",
+    });
+  };
+
+  const handleEditShift = (shiftId: string) => {
+    toast({
+      title: "Edit Shift",
+      description: `Edit shift ${shiftId} form opened.`,
+    });
+  };
+
+  const handleReallocateShift = (from: string, to: string) => {
+    toast({
+      title: "Reallocate Seats",
+      description: `Seats reallocated from ${from} to ${to}.`,
+    });
+  };
+
   return (
     <Card className={cn("", className)}>
       <CardHeader>
@@ -85,66 +111,102 @@ const ShiftSchedule = ({ className }: ShiftScheduleProps) => {
             <CardTitle>Shift Management</CardTitle>
             <CardDescription>Configure library operating shifts</CardDescription>
           </div>
-          <Button>
+          <Button onClick={handleAddNewShift}>
             <Plus className="mr-2 h-4 w-4" />
             Add New Shift
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Shift Name</TableHead>
-              <TableHead>Time Range</TableHead>
-              <TableHead className="hidden md:table-cell">Capacity</TableHead>
-              <TableHead className="hidden md:table-cell">Current Occupancy</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {shifts.map((shift) => (
-              <TableRow key={shift.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    <ClockIcon className="h-4 w-4 text-muted-foreground" />
-                    {shift.name}
-                  </div>
-                </TableCell>
-                <TableCell>{shift.timeRange}</TableCell>
-                <TableCell className="hidden md:table-cell">{shift.capacity}</TableCell>
-                <TableCell className="hidden md:table-cell">{shift.currentOccupancy}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={shift.status === "active" ? "default" : "outline"}
-                  >
-                    {shift.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm">
-                    <PencilLine className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Shift Name</TableHead>
+                <TableHead>Time Range</TableHead>
+                <TableHead className="hidden md:table-cell">Capacity</TableHead>
+                <TableHead className="hidden md:table-cell">Current Occupancy</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {shifts.map((shift) => (
+                <TableRow key={shift.id}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <ClockIcon className="h-4 w-4 text-muted-foreground" />
+                      {shift.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>{shift.timeRange}</TableCell>
+                  <TableCell className="hidden md:table-cell">{shift.capacity}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div className="flex items-center">
+                      {shift.currentOccupancy}
+                      {shift.currentOccupancy.includes('(80%)') || 
+                       shift.currentOccupancy.includes('(82%)') || 
+                       shift.currentOccupancy.includes('(87%)') ? (
+                        <AlertCircle className="ml-2 h-4 w-4 text-amber-500" title="High occupancy" />
+                      ) : null}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={shift.status === "active" ? "default" : "outline"}
+                      className={shift.status === "active" ? "bg-green-500" : ""}
+                    >
+                      {shift.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleEditShift(shift.id)}
+                    >
+                      <PencilLine className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
         
         <div className="mt-4 p-4 bg-muted/50 rounded-md">
           <h4 className="font-medium mb-2">Auto Seat Reallocation</h4>
-          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-            <Button variant="secondary" size="sm">
-              Reallocate Morning → Evening
+          <div className="flex flex-wrap gap-2 items-start">
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => handleReallocateShift("Morning", "Evening")}
+              className="flex items-center"
+            >
+              <RotateCw className="mr-1 h-3 w-3" />
+              Morning → Evening
             </Button>
-            <Button variant="secondary" size="sm">
-              Reallocate Evening → Late Evening
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => handleReallocateShift("Evening", "Late Evening")}
+              className="flex items-center"
+            >
+              <RotateCw className="mr-1 h-3 w-3" />
+              Evening → Late Evening
             </Button>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex items-center"
+              onClick={() => toast({
+                title: "Configure Auto-Reallocation",
+                description: "Auto-reallocation settings opened."
+              })}
+            >
               Configure Auto-Reallocation
             </Button>
           </div>
