@@ -1,16 +1,27 @@
-
 /**
  * API utility functions for handling errors, formatting requests, etc.
  */
 
+// Define a more specific error type
+export interface ApiError {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
 // Format error response
-export const formatErrorResponse = (error: any): string => {
-  if (error?.response?.data?.message) {
-    return error.response.data.message;
+export const formatErrorResponse = (error: ApiError | unknown): string => {
+  const apiError = error as ApiError;
+  
+  if (apiError?.response?.data?.message) {
+    return apiError.response.data.message;
   }
   
-  if (error?.message) {
-    return error.message;
+  if (apiError?.message) {
+    return apiError.message;
   }
   
   return 'An unexpected error occurred';
@@ -29,15 +40,15 @@ export const generateReferenceId = (prefix: string): string => {
 };
 
 // Create query string from parameters
-export const createQueryString = (params: Record<string, any>): string => {
+export const createQueryString = (params: Record<string, string | number | boolean>): string => {
   return Object.keys(params)
     .filter(key => params[key] !== undefined && params[key] !== null)
-    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`)
     .join('&');
 };
 
 // Parse API response
-export const parseApiResponse = <T>(response: any): T => {
+export const parseApiResponse = <T>(response: unknown): T => {
   if (!response || typeof response !== 'object') {
     throw new Error('Invalid API response format');
   }

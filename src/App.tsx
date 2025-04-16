@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -8,6 +7,7 @@ import Shifts from "./pages/Shifts";
 import Payments from "./pages/Payments";
 import Notifications from "./pages/Notifications";
 import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import './App.css';
 import { Toaster } from "sonner";
 
@@ -22,6 +22,7 @@ function App() {
         <Route path="/payments" element={<Payments />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster position="top-right" />

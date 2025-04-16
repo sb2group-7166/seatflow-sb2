@@ -1,11 +1,7 @@
-
 import React, { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Calendar, IndianRupee, TrendingUp, Users, Download, FileSpreadsheet, FileText, Filter, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateForApi } from "@/lib/api-utils";
+import { 
+  IndianRupee, 
+  Settings,
+  Search,
+  CheckCircle,
+  XCircle,
+  Loader2
+} from "lucide-react";
 
 // Mock payment data
 const payments = [
@@ -50,43 +53,12 @@ const payments = [
     date: "2024-04-09",
     method: "Net Banking",
     description: "Fine payment"
-  },
-  {
-    id: "INV004",
-    studentName: "Samantha Lee",
-    studentId: "STU1002",
-    amount: 1000,
-    status: "completed",
-    date: "2024-04-08",
-    method: "UPI",
-    description: "Full semester access"
-  },
-  {
-    id: "INV005",
-    studentName: "Michael Wong",
-    studentId: "STU1005",
-    amount: 100,
-    status: "failed",
-    date: "2024-04-06",
-    method: "Debit Card",
-    description: "Daily pass"
-  },
+  }
 ];
 
-// Collection stats
-const collectionStats = {
-  today: 750,
-  month: 8500,
-  total: 125000
-};
-
 const PaymentsPage = () => {
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
 
   // Filter payments based on search query
   const filteredPayments = payments.filter((payment) => {
@@ -94,17 +66,9 @@ const PaymentsPage = () => {
     return (
       payment.studentName.toLowerCase().includes(query) ||
       payment.studentId.toLowerCase().includes(query) ||
-      payment.id.toLowerCase().includes(query) ||
-      payment.description?.toLowerCase().includes(query) ||
-      payment.method?.toLowerCase().includes(query)
+      payment.id.toLowerCase().includes(query)
     );
   });
-
-  // Paginate payments
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentPayments = filteredPayments.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
 
   // Format Indian Rupee
   const formatRupee = (amount: number) => {
@@ -129,249 +93,138 @@ const PaymentsPage = () => {
     }
   };
 
-  const handleGenerateReport = () => {
-    toast({
-      title: "Report Generated",
-      description: "Your payment report has been generated successfully.",
-    });
-  };
-
-  const handleExport = (format: string) => {
-    toast({
-      title: `Export to ${format.toUpperCase()}`,
-      description: `Your data has been exported to ${format.toUpperCase()} format.`,
-    });
-  };
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Payment Management</h1>
-          <p className="text-muted-foreground">Track and manage all payment transactions</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Payment Management</h1>
+            <p className="text-muted-foreground">
+              Track and manage payment transactions
+            </p>
+          </div>
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
         </div>
 
-        {/* Collection Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Today's Collection</CardTitle>
+              <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl md:text-3xl font-bold flex items-center">
-                  <IndianRupee className="h-5 w-5 md:h-6 md:w-6 mr-1 text-primary/70" />
-                  {formatRupee(collectionStats.today).replace('₹', '')}
+                <div className="text-2xl font-bold flex items-center">
+                  <IndianRupee className="h-5 w-5 mr-1" />
+                  750
                 </div>
-                <Calendar className="h-7 w-7 md:h-8 md:w-8 text-primary/70" />
+                <CheckCircle className="h-6 w-6 text-green-500" />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Updated as of today</p>
+              <p className="text-xs text-muted-foreground mt-2">Total collected today</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">This Month's Collection</CardTitle>
+              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl md:text-3xl font-bold flex items-center">
-                  <IndianRupee className="h-5 w-5 md:h-6 md:w-6 mr-1 text-primary/70" />
-                  {formatRupee(collectionStats.month).replace('₹', '')}
+                <div className="text-2xl font-bold flex items-center">
+                  <IndianRupee className="h-5 w-5 mr-1" />
+                  8500
                 </div>
-                <TrendingUp className="h-7 w-7 md:h-8 md:w-8 text-primary/70" />
+                <CheckCircle className="h-6 w-6 text-blue-500" />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">April 2024</p>
+              <p className="text-xs text-muted-foreground mt-2">This month's collection</p>
             </CardContent>
           </Card>
-          
-          <Card className="sm:col-span-2 md:col-span-1">
+
+          <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">Total Collection</CardTitle>
+              <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl md:text-3xl font-bold flex items-center">
-                  <IndianRupee className="h-5 w-5 md:h-6 md:w-6 mr-1 text-primary/70" />
-                  {formatRupee(collectionStats.total).replace('₹', '')}
+                <div className="text-2xl font-bold flex items-center">
+                  <IndianRupee className="h-5 w-5 mr-1" />
+                  150
                 </div>
-                <Users className="h-7 w-7 md:h-8 md:w-8 text-primary/70" />
+                <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
               </div>
-              <p className="text-xs text-muted-foreground mt-2">Lifetime total</p>
+              <p className="text-xs text-muted-foreground mt-2">Awaiting confirmation</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Failed Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold flex items-center">
+                  <IndianRupee className="h-5 w-5 mr-1" />
+                  50
+                </div>
+                <XCircle className="h-6 w-6 text-red-500" />
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Requires attention</p>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="transactions">
-          <TabsList className="grid w-full sm:w-[400px] grid-cols-2">
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="transactions">
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <CardTitle>Recent Transactions</CardTitle>
-                    <CardDescription>Payment transactions from all students</CardDescription>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="relative">
-                      <Input
-                        type="search"
-                        placeholder="Search transactions..."
-                        className="w-full sm:w-[220px] pl-8"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                      <Search
-                        className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
-                      />
-                    </div>
-                    <Button>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Generate Invoice
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Invoice</TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="hidden md:table-cell">Date</TableHead>
-                        <TableHead className="hidden md:table-cell">Method</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell className="font-medium">{payment.id}</TableCell>
-                          <TableCell>
-                            <div>
-                              {payment.studentName}
-                              <p className="text-sm text-muted-foreground">{payment.studentId}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center">
-                              <IndianRupee className="h-3 w-3 mr-1" />
-                              {payment.amount}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{payment.description}</p>
-                          </TableCell>
-                          <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                          <TableCell className="hidden md:table-cell">{payment.date}</TableCell>
-                          <TableCell className="hidden md:table-cell">{payment.method}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                
-                <div className="flex items-center justify-between space-x-2 py-4">
-                  <div className="text-sm text-muted-foreground">
-                    Showing <span className="font-medium">{Math.min(filteredPayments.length, indexOfFirstItem + 1)}-{Math.min(indexOfLastItem, filteredPayments.length)}</span> of <span className="font-medium">{filteredPayments.length}</span> results
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handlePreviousPage}
-                      disabled={currentPage === 1}
-                    >
-                      Previous
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={handleNextPage}
-                      disabled={currentPage === totalPages || totalPages === 0}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="reports">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Reports</CardTitle>
-                <CardDescription>
-                  Generate customized payment reports for any date range
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
-                  <div>
-                    <p className="text-sm font-medium mb-2">Start Date</p>
-                    <DatePicker date={startDate} setDate={setStartDate} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium mb-2">End Date</p>
-                    <DatePicker date={endDate} setDate={setEndDate} />
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  <Button onClick={handleGenerateReport}>
-                    <Filter className="mr-2 h-4 w-4" />
-                    Generate Report
-                  </Button>
-                  <Button variant="outline" onClick={() => handleExport('excel')}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    Export to Excel
-                  </Button>
-                  <Button variant="outline" onClick={() => handleExport('pdf')}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Export to PDF
-                  </Button>
-                </div>
-
-                <div className="mt-6 p-4 border rounded-md">
-                  <h3 className="font-medium text-lg mb-2">Summary</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Transactions</p>
-                      <p className="text-xl md:text-2xl font-bold">153</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Amount</p>
-                      <div className="flex items-center text-xl md:text-2xl font-bold">
-                        <IndianRupee className="h-4 w-4 mr-1" />
-                        {formatRupee(15250).replace('₹', '')}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle>Recent Payments</CardTitle>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search payments..."
+                  className="w-full sm:w-[200px] pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPayments.map((payment) => (
+                  <TableRow key={payment.id}>
+                    <TableCell className="font-medium">{payment.id}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{payment.studentName}</p>
+                        <p className="text-xs text-muted-foreground">{payment.studentId}</p>
                       </div>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Average Transaction</p>
-                      <div className="flex items-center text-xl md:text-2xl font-bold">
-                        <IndianRupee className="h-4 w-4 mr-1" />
-                        {formatRupee(324).replace('₹', '')}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    </TableCell>
+                    <TableCell>{formatRupee(payment.amount)}</TableCell>
+                    <TableCell>{payment.date}</TableCell>
+                    <TableCell>{payment.method}</TableCell>
+                    <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );

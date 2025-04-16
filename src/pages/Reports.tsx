@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import {
@@ -116,6 +115,91 @@ const studentActivity = [
     bookings: 11,
     noShows: 1,
     avgDuration: "3.0 hrs"
+  }
+];
+
+// Mock data for financial reports
+const financialData = [
+  {
+    month: "January",
+    totalRevenue: "₹45,000",
+    seatBookings: "₹32,000",
+    lateFees: "₹5,000",
+    membership: "₹8,000",
+    growth: "+12%"
+  },
+  {
+    month: "February",
+    totalRevenue: "₹48,500",
+    seatBookings: "₹34,000",
+    lateFees: "₹6,500",
+    membership: "₹8,000",
+    growth: "+8%"
+  },
+  {
+    month: "March",
+    totalRevenue: "₹52,000",
+    seatBookings: "₹36,000",
+    lateFees: "₹8,000",
+    membership: "₹8,000",
+    growth: "+7%"
+  },
+  {
+    month: "April",
+    totalRevenue: "₹55,500",
+    seatBookings: "₹38,000",
+    lateFees: "₹9,500",
+    membership: "₹8,000",
+    growth: "+7%"
+  }
+];
+
+// Mock data for payment history
+const paymentHistory = [
+  {
+    id: "PAY1001",
+    studentId: "STU1001",
+    studentName: "Alex Johnson",
+    amount: "₹1,200",
+    type: "Seat Booking",
+    date: "2024-03-15",
+    status: "Completed"
+  },
+  {
+    id: "PAY1002",
+    studentId: "STU1002",
+    studentName: "Samantha Lee",
+    amount: "₹800",
+    type: "Late Fee",
+    date: "2024-03-14",
+    status: "Completed"
+  },
+  {
+    id: "PAY1003",
+    studentId: "STU1003",
+    studentName: "David Martinez",
+    amount: "₹2,000",
+    type: "Membership",
+    date: "2024-03-13",
+    status: "Completed"
+  },
+  {
+    id: "PAY1004",
+    studentId: "STU1004",
+    studentName: "Priya Patel",
+    amount: "₹1,500",
+    type: "Seat Booking",
+    date: "2024-03-12",
+    status: "Pending"
+  },
+  {
+    id: "PAY1005",
+    studentId: "STU1005",
+    studentName: "Michael Wong",
+    amount: "₹900",
+    type: "Late Fee",
+    date: "2024-03-11",
+    status: "Completed"
   }
 ];
 
@@ -471,142 +555,128 @@ const ReportsPage = () => {
 
           {/* Financial Tab */}
           <TabsContent value="financial" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Breakdown</CardTitle>
-                  <CardDescription>
-                    Revenue by category over time
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <RevenueChart />
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Metrics</CardTitle>
-                  <CardDescription>
-                    Key financial indicators
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Total Revenue</p>
-                      <p className="text-2xl font-bold">$2,580.50</p>
-                      <p className="text-xs flex items-center text-success">
-                        <ChevronDown className="h-3 w-3 rotate-180" />
-                        +5.2% from previous period
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Average Daily Revenue</p>
-                      <p className="text-2xl font-bold">$86.02</p>
-                      <p className="text-xs flex items-center text-success">
-                        <ChevronDown className="h-3 w-3 rotate-180" />
-                        +3.8% from previous period
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Revenue per Seat</p>
-                      <p className="text-2xl font-bold">$10.75</p>
-                      <p className="text-xs flex items-center text-success">
-                        <ChevronDown className="h-3 w-3 rotate-180" />
-                        +2.1% from previous period
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Fines Collection Rate</p>
-                      <p className="text-2xl font-bold">92.4%</p>
-                      <p className="text-xs flex items-center text-destructive">
-                        <ChevronDown className="h-3 w-3" />
-                        -1.5% from previous period
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
             <Card>
               <CardHeader>
-                <CardTitle>Revenue by Payment Method</CardTitle>
+                <CardTitle>Financial Overview</CardTitle>
                 <CardDescription>
-                  Breakdown of revenue by payment type
+                  Revenue and payment statistics
                 </CardDescription>
               </CardHeader>
-              <CardContent className="h-[300px]">
-                <div className="h-full w-full flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <BarChart className="h-16 w-16 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Payment method breakdown chart would be displayed here
-                    </p>
-                  </div>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">₹2,01,000</div>
+                      <p className="text-xs text-muted-foreground">
+                        +12% from last month
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Seat Bookings</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">₹1,40,000</div>
+                      <p className="text-xs text-muted-foreground">
+                        +8% from last month
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Late Fees</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">₹29,000</div>
+                      <p className="text-xs text-muted-foreground">
+                        +15% from last month
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">Membership</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">₹32,000</div>
+                      <p className="text-xs text-muted-foreground">
+                        +5% from last month
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Month</TableHead>
+                      <TableHead>Total Revenue</TableHead>
+                      <TableHead>Seat Bookings</TableHead>
+                      <TableHead>Late Fees</TableHead>
+                      <TableHead>Membership</TableHead>
+                      <TableHead>Growth</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {financialData.map((item) => (
+                      <TableRow key={item.month}>
+                        <TableCell>{item.month}</TableCell>
+                        <TableCell>{item.totalRevenue}</TableCell>
+                        <TableCell>{item.seatBookings}</TableCell>
+                        <TableCell>{item.lateFees}</TableCell>
+                        <TableCell>{item.membership}</TableCell>
+                        <TableCell className={item.growth.startsWith('+') ? 'text-green-500' : 'text-red-500'}>
+                          {item.growth}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
-                <CardTitle>Financial Reports</CardTitle>
+                <CardTitle>Recent Payments</CardTitle>
                 <CardDescription>
-                  Download detailed financial reports
+                  Latest payment transactions
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Monthly Revenue Report</p>
-                      <p className="text-sm text-muted-foreground">
-                        April 2023 (PDF, 2.3MB)
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Revenue by Category</p>
-                      <p className="text-sm text-muted-foreground">
-                        Q1 2023 (XLSX, 1.5MB)
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">Payment Processing Report</p>
-                      <p className="text-sm text-muted-foreground">
-                        Last 30 Days (CSV, 0.8MB)
-                      </p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </div>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Payment ID</TableHead>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paymentHistory.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell>{payment.id}</TableCell>
+                        <TableCell>{payment.studentName}</TableCell>
+                        <TableCell>{payment.amount}</TableCell>
+                        <TableCell>{payment.type}</TableCell>
+                        <TableCell>{payment.date}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            payment.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {payment.status}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>

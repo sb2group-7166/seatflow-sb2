@@ -1,4 +1,3 @@
-
 // Reports API Service
 
 import { toast } from "sonner";
@@ -296,7 +295,7 @@ export const generateCustomReport = async (
   reportType: string,
   startDate: string,
   endDate: string,
-  filters: Record<string, any>
+  filters: Record<string, string | number | boolean | string[]>
 ): Promise<string> => {
   try {
     // Simulate API call

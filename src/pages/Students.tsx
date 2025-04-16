@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StudentTable from "@/components/dashboard/StudentTable";
 import {
@@ -11,59 +10,41 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import {
-  UserPlus,
-  Search,
   UserCheck,
-  UserX,
   FileText,
   Mail,
-  Phone,
   Calendar,
-  Upload,
+  Users,
+  AlertTriangle,
+  Loader2,
+  Plus,
   User,
+  UserCog,
+  IdCard,
+  Phone,
+  Image,
+  File,
+  CheckCircle,
+  XCircle,
+  Clock
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const studentFormSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  studentId: z.string().min(5, {
-    message: "Student ID must be at least 5 characters.",
-  }),
-  phone: z.string().optional(),
-  status: z.enum(["active", "pending", "banned"]),
-  // We don't validate file uploads in the schema as they're handled separately
-});
+import { Badge } from "@/components/ui/badge";
+import { studentService } from '@/services/api';
 
 const StudentsPage = () => {
   const [selectedStudent, setSelectedStudent] = useState<null | {
@@ -72,231 +53,574 @@ const StudentsPage = () => {
     email: string;
   }>(null);
   
+  const [isLoading, setIsLoading] = useState(true);
+  const [students, setStudents] = useState<any[]>([]);
   const { toast } = useToast();
-  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [idProof, setIdProof] = useState<File | null>(null);
-
-  const form = useForm<z.infer<typeof studentFormSchema>>({
-    resolver: zodResolver(studentFormSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      studentId: "",
-      phone: "",
-      status: "active",
-    },
+  const [isAddStudentOpen, setIsAddStudentOpen] = useState(false);
+  const [newStudent, setNewStudent] = useState({
+    name: "",
+    fatherName: "",
+    studentId: "",
+    email: "",
+    phone: "",
+    profilePhoto: null,
+    idProof: null,
+    status: "pending"
   });
 
-  function onSubmit(values: z.infer<typeof studentFormSchema>) {
+  // Student overview statistics
+  const studentStats = {
+    total: 5,
+    active: 3,
+    pending: 1,
+    banned: 1,
+    newThisMonth: 2,
+    violations: 5
+  };
+
+  // Make sure percentages are calculated safely
+  const activePercentage = studentStats.total > 0 
+    ? ((studentStats.active / studentStats.total) * 100).toFixed(1) 
+    : "0.0";
+
+  // Mock student data using useMemo to prevent recreation on every render
+  const studentsData = React.useMemo(() => [
+    {
+      id: "STU1001",
+      name: "Alex Johnson",
+      email: "alex.j@example.edu",
+      registeredOn: "2023-09-15",
+      status: "active",
+      lastActive: "10 mins ago",
+      photo: "/placeholder.svg",
+      idProof: "ID12345",
+      bookings: 28,
+      violations: 0,
+      phone: "+1 555-123-4567",
+      address: "123 Campus Drive, University Housing Block A",
+      priority: "high",
+      notes: "Scholarship student. Regular visitor to the study areas."
+    },
+    {
+      id: "STU1002",
+      name: "Samantha Lee",
+      email: "slee@example.edu",
+      registeredOn: "2023-08-22",
+      status: "active",
+      lastActive: "2 hours ago",
+      photo: "/placeholder.svg",
+      idProof: "ID12346",
+      bookings: 15,
+      violations: 1,
+      phone: "+1 555-987-6543",
+      address: "456 University Ave, Apartment 2B",
+      priority: "medium",
+      notes: "Research assistant in Biology department. Uses computer labs frequently."
+    },
+    {
+      id: "STU1003",
+      name: "David Martinez",
+      email: "dmartinez@example.edu",
+      registeredOn: "2023-10-05",
+      status: "suspended",
+      lastActive: "3 days ago",
+      photo: "/placeholder.svg",
+      idProof: "ID12347",
+      bookings: 32,
+      violations: 3,
+      phone: "+1 555-456-7890",
+      address: "789 College Blvd, Dorm 3C",
+      priority: "low",
+      notes: "Suspended due to multiple noise complaints and disruptive behavior."
+    },
+    {
+      id: "STU1004",
+      name: "Priya Patel",
+      email: "ppatel@example.edu",
+      registeredOn: "2023-07-30",
+      status: "pending",
+      lastActive: "Just now",
+      photo: "/placeholder.svg",
+      idProof: "ID12348",
+      bookings: 5,
+      violations: 0,
+      phone: "+1 555-234-5678",
+      address: "101 Study Lane, Housing Complex D",
+      priority: "medium",
+      notes: "Exchange student. Registration pending ID verification."
+    },
+    {
+      id: "STU1005",
+      name: "Michael Wong",
+      email: "mwong@example.edu",
+      registeredOn: "2023-09-02",
+      status: "active",
+      lastActive: "5 hours ago",
+      photo: "/placeholder.svg",
+      idProof: "ID12349",
+      bookings: 17,
+      violations: 1,
+      phone: "+1 555-876-5432",
+      address: "202 Academia Road, Apartment 4A",
+      priority: "high",
+      notes: "Student council member. Has extended access privileges."
+    }
+  ], []);
+
+  // Function to handle filtering and sorting
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [sortField, setSortField] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
+
+  // Generate filtered and sorted students list based on search, filters, and sort
+  const filteredAndSortedStudents = React.useMemo(() => {
+    let filtered = [...studentsData];
+    
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(student => student.status === statusFilter);
+    }
+    
+    // Apply priority filter
+    if (priorityFilter !== "all") {
+      filtered = filtered.filter(student => student.priority === priorityFilter);
+    }
+    
+    // Apply search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(student => 
+        student.name.toLowerCase().includes(search) || 
+        student.id.toLowerCase().includes(search) || 
+        student.email.toLowerCase().includes(search) ||
+        (student.phone && student.phone.toLowerCase().includes(search))
+      );
+    }
+    
+    // Sort students
+    return filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'id':
+          comparison = a.id.localeCompare(b.id);
+          break;
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'lastActive':
+          comparison = a.lastActive.localeCompare(b.lastActive);
+          break;
+        case 'priority': {
+          const priorityOrder = { high: 1, medium: 2, low: 3 };
+          comparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+          break;
+        }
+        default:
+          comparison = 0;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [studentsData, sortField, sortDirection, statusFilter, priorityFilter, searchTerm]);
+
+  // Function to handle student editing
+  const handleEditStudent = (student) => {
+    setSelectedStudent(student);
     toast({
-      title: "Student Added",
-      description: `Student "${values.name}" has been added successfully.`,
+      title: "Edit Initiated",
+      description: `Opening editor for student ${student.name}`,
     });
-    console.log({
-      ...values,
-      profilePhoto: profilePhoto ? profilePhoto.name : null,
-      idProof: idProof ? idProof.name : null
-    });
-    form.reset();
-    setProfilePhoto(null);
-    setIdProof(null);
+    // In a real app, you would open a dialog or form for editing
+  };
+
+  const handleAddStudent = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Create FormData for file uploads
+      const formData = new FormData();
+      formData.append('name', newStudent.name);
+      formData.append('fatherName', newStudent.fatherName);
+      formData.append('studentId', newStudent.studentId);
+      formData.append('email', newStudent.email);
+      formData.append('phone', newStudent.phone);
+      formData.append('status', newStudent.status);
+      
+      if (newStudent.profilePhoto) {
+        formData.append('profilePhoto', newStudent.profilePhoto);
+      }
+      
+      if (newStudent.idProof) {
+        formData.append('idProof', newStudent.idProof);
+      }
+
+      // Call the API
+      await studentService.createStudent(formData);
+
+      // Show success message
+      toast({
+        title: "Success",
+        description: "Student added successfully",
+      });
+
+      // Reset form and close dialog
+      setIsAddStudentOpen(false);
+      setNewStudent({
+        name: "",
+        fatherName: "",
+        studentId: "",
+        email: "",
+        phone: "",
+        profilePhoto: null,
+        idProof: null,
+        status: "pending"
+      });
+
+      // Refresh students list
+      fetchStudents();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to add student",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchStudents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await studentService.getStudents();
+      setStudents(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch students",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[70vh]">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading student data...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
   }
-
-  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setProfilePhoto(e.target.files[0]);
-    }
-  };
-
-  const handleIdProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setIdProof(e.target.files[0]);
-    }
-  };
-
-  // Mock student details data
-  const studentDetails = {
-    name: "Alex Johnson",
-    email: "alex.j@example.edu",
-    id: "STU1001",
-    joinedOn: "September 15, 2023",
-    lastActive: "April 10, 2023 (10:30 AM)",
-    status: "active",
-    bookings: 28,
-    violations: 0,
-    phone: "+1 555-123-4567",
-    address: "123 Campus Drive, University Housing Block A",
-  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Student Management</h1>
-          <p className="text-muted-foreground">Manage student profiles and access</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-green-600">STUDENT MANAGEMENT</h1>
+            <p className="text-muted-foreground">Manage student profiles and access</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <FileText className="mr-2 h-4 w-4" />
+              Export List
+            </Button>
+            <Dialog open={isAddStudentOpen} onOpenChange={setIsAddStudentOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Student
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[800px]">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-2xl">
+                    <UserCog className="h-6 w-6 text-primary" />
+                    Add New Student
+                  </DialogTitle>
+                  <DialogDescription className="text-base">
+                    Please fill in all the required information to register a new student.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Student Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          className="pl-9"
+                          value={newStudent.name}
+                          onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
+                          placeholder="Enter student name"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Father's/Husband's Name</Label>
+                      <div className="relative">
+                        <UserCog className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          className="pl-9"
+                          value={newStudent.fatherName}
+                          onChange={(e) => setNewStudent({ ...newStudent, fatherName: e.target.value })}
+                          placeholder="Enter father's/husband's name"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Student ID</Label>
+                      <div className="relative">
+                        <IdCard className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          className="pl-9"
+                          value={newStudent.studentId}
+                          onChange={(e) => setNewStudent({ ...newStudent, studentId: e.target.value })}
+                          placeholder="Enter student ID"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          className="pl-9"
+                          type="email"
+                          value={newStudent.email}
+                          onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
+                          placeholder="Enter email address"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Phone No</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          className="pl-9"
+                          type="tel"
+                          value={newStudent.phone}
+                          onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Status</Label>
+                      <Select
+                        value={newStudent.status}
+                        onValueChange={(value) => setNewStudent({ ...newStudent, status: value })}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <span>Active</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="pending">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-yellow-500" />
+                              <span>Pending</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="suspended">
+                            <div className="flex items-center gap-2">
+                              <XCircle className="h-4 w-4 text-red-500" />
+                              <span>Suspended</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Profile Photo</Label>
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setNewStudent({ ...newStudent, profilePhoto: e.target.files?.[0] })}
+                            className="hidden"
+                            id="profile-photo"
+                          />
+                          <Label
+                            htmlFor="profile-photo"
+                            className="flex items-center gap-2 cursor-pointer border rounded-md p-3 hover:bg-accent"
+                          >
+                            <Image className="h-4 w-4" />
+                            <span>Choose Profile Photo</span>
+                          </Label>
+                        </div>
+                        {newStudent.profilePhoto && (
+                          <span className="text-sm text-muted-foreground">
+                            {(newStudent.profilePhoto as File).name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Upload ID</Label>
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <Input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) => setNewStudent({ ...newStudent, idProof: e.target.files?.[0] })}
+                            className="hidden"
+                            id="id-proof"
+                          />
+                          <Label
+                            htmlFor="id-proof"
+                            className="flex items-center gap-2 cursor-pointer border rounded-md p-3 hover:bg-accent"
+                          >
+                            <File className="h-4 w-4" />
+                            <span>Choose ID Document</span>
+                          </Label>
+                        </div>
+                        {newStudent.idProof && (
+                          <span className="text-sm text-muted-foreground">
+                            {(newStudent.idProof as File).name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddStudentOpen(false)}
+                    className="w-full sm:w-auto"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddStudent}
+                    disabled={isLoading}
+                    className="w-full sm:w-auto"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Adding Student...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Student
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Notification
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Send Notification to Students</DialogTitle>
+                  <DialogDescription>
+                    This will send a notification to all students or selected group of students.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <p className="text-sm text-muted-foreground">Feature coming soon</p>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline">Cancel</Button>
+                  <Button>Send</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <Tabs defaultValue="list">
-          <TabsList className="grid w-full sm:w-[400px] grid-cols-2">
-            <TabsTrigger value="list">Student List</TabsTrigger>
-            <TabsTrigger value="add">Add Student</TabsTrigger>
-          </TabsList>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{studentStats.total.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">
+                +{studentStats.newThisMonth} this month
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Students</CardTitle>
+              <UserCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{studentStats.active.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">
+                {activePercentage}% of total
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{studentStats.pending}</div>
+              <p className="text-xs text-muted-foreground">
+                Require verification
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Violations</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{studentStats.violations}</div>
+              <p className="text-xs text-muted-foreground">
+                In the last 30 days
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-          <TabsContent value="list" className="space-y-4">
-            <StudentTable />
-          </TabsContent>
-
-          <TabsContent value="add">
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New Student</CardTitle>
-                <CardDescription>
-                  Enter student details to register them in the system.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="John Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="john.doe@university.edu" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="studentId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Student ID</FormLabel>
-                            <FormControl>
-                              <Input placeholder="STU12345" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+1 123-456-7890" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormItem>
-                        <FormLabel>Profile Photo</FormLabel>
-                        <div className="flex items-center gap-4">
-                          <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                            {profilePhoto ? (
-                              <img 
-                                src={URL.createObjectURL(profilePhoto)} 
-                                alt="Profile Preview" 
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <User className="h-8 w-8 text-muted-foreground" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <Input 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handleProfilePhotoChange}
-                            />
-                            <FormDescription>
-                              Upload a profile photo (JPG or PNG).
-                            </FormDescription>
-                          </div>
-                        </div>
-                      </FormItem>
-
-                      <FormItem>
-                        <FormLabel>Upload ID</FormLabel>
-                        <div className="flex items-center gap-4">
-                          <Upload className={`h-8 w-8 ${idProof ? 'text-primary' : 'text-muted-foreground'}`} />
-                          <div className="flex-1">
-                            <Input 
-                              type="file" 
-                              accept=".pdf,.jpg,.jpeg,.png" 
-                              onChange={handleIdProofChange}
-                            />
-                            <FormDescription>
-                              Upload a valid ID document (PDF, JPG or PNG).
-                            </FormDescription>
-                          </div>
-                        </div>
-                        {idProof && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Selected file: {idProof.name}
-                          </p>
-                        )}
-                      </FormItem>
-
-                      <FormField
-                        control={form.control}
-                        name="status"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Status</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="active">Active</SelectItem>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="banned">Banned</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <Button type="submit">
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Add Student
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4">
+          <StudentTable 
+            students={students}
+            filteredAndSortedStudents={filteredAndSortedStudents}
+            editStudent={handleEditStudent}
+          />
+        </div>
       </div>
     </DashboardLayout>
   );

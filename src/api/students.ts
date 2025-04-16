@@ -1,9 +1,6 @@
-
 // Student API Service
-
 import { toast } from "sonner";
 
-// Student interface
 export interface Student {
   id: string;
   name: string;
@@ -15,61 +12,15 @@ export interface Student {
   photo?: string;
 }
 
-// Mock data - replace with actual API calls when backend is connected
-const mockStudents: Student[] = [
-  {
-    id: "1",
-    name: "James Wilson",
-    email: "james.wilson@example.com",
-    studentId: "SB2001",
-    joinDate: "2023-01-15",
-    status: "active",
-    contactNumber: "555-1234",
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    email: "sarah.j@example.com",
-    studentId: "SB2002",
-    joinDate: "2023-02-10",
-    status: "active",
-    contactNumber: "555-5678",
-  },
-  {
-    id: "3",
-    name: "Michael Brown",
-    email: "michael.b@example.com",
-    studentId: "SB2003",
-    joinDate: "2023-01-20",
-    status: "suspended",
-    contactNumber: "555-9012",
-  },
-  {
-    id: "4",
-    name: "Emma Davis",
-    email: "emma.d@example.com",
-    studentId: "SB2004",
-    joinDate: "2023-03-05",
-    status: "active",
-    contactNumber: "555-3456",
-  },
-  {
-    id: "5",
-    name: "Robert Garcia",
-    email: "robert.g@example.com",
-    studentId: "SB2005",
-    joinDate: "2023-02-25",
-    status: "graduated",
-    contactNumber: "555-7890",
-  }
-];
+// API endpoints configuration
+const API_BASE_URL = "/api/students";
 
 // Get all students
 export const getAllStudents = async (): Promise<Student[]> => {
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return mockStudents;
+    const response = await fetch(API_BASE_URL);
+    if (!response.ok) throw new Error("Failed to fetch students");
+    return await response.json();
   } catch (error) {
     toast.error("Failed to fetch students");
     console.error("Error fetching students:", error);
@@ -80,10 +31,9 @@ export const getAllStudents = async (): Promise<Student[]> => {
 // Get student by ID
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const student = mockStudents.find(s => s.id === id);
-    return student || null;
+    const response = await fetch(`${API_BASE_URL}/${id}`);
+    if (!response.ok) throw new Error("Student not found");
+    return await response.json();
   } catch (error) {
     toast.error("Failed to fetch student details");
     console.error("Error fetching student:", error);
@@ -92,16 +42,21 @@ export const getStudentById = async (id: string): Promise<Student | null> => {
 };
 
 // Create student
-export const createStudent = async (student: Omit<Student, 'id'>): Promise<Student | null> => {
+export const createStudent = async (
+  student: Omit<Student, 'id'>
+): Promise<Student | null> => {
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
+    const response = await fetch(API_BASE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(student),
+    });
+
+    if (!response.ok) throw new Error("Creation failed");
     
-    const newStudent: Student = {
-      ...student,
-      id: `${mockStudents.length + 1}`,
-    };
-    
+    const newStudent = await response.json();
     toast.success("Student created successfully");
     return newStudent;
   } catch (error) {
@@ -112,15 +67,22 @@ export const createStudent = async (student: Omit<Student, 'id'>): Promise<Stude
 };
 
 // Update student
-export const updateStudent = async (id: string, data: Partial<Student>): Promise<Student | null> => {
+export const updateStudent = async (
+  id: string,
+  data: Partial<Student>
+): Promise<Student | null> => {
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 600));
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) throw new Error("Update failed");
     
-    const student = mockStudents.find(s => s.id === id);
-    if (!student) return null;
-    
-    const updatedStudent = { ...student, ...data };
+    const updatedStudent = await response.json();
     toast.success("Student updated successfully");
     return updatedStudent;
   } catch (error) {
@@ -133,8 +95,12 @@ export const updateStudent = async (id: string, data: Partial<Student>): Promise
 // Delete student
 export const deleteStudent = async (id: string): Promise<boolean> => {
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 700));
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) throw new Error("Deletion failed");
+    
     toast.success("Student deleted successfully");
     return true;
   } catch (error) {

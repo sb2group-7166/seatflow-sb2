@@ -1,12 +1,12 @@
-
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { ReactNode } from "react";
 
 interface StatCardProps {
   title: string;
-  value: string | number;
+  value: string | number | ReactNode;
   icon: LucideIcon;
-  description?: string;
+  description?: string | ReactNode;
   trend?: {
     value: number;
     isPositive: boolean;

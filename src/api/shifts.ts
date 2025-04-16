@@ -2,7 +2,8 @@
 // Shifts API Service
 
 import { toast } from "sonner";
-import { SeatZone } from "./seats";
+
+export type SeatZone = "full-day" | "half-day" | "reading-area" | "computer-zone" | "quiet-study" | "group-study";
 
 export interface Shift {
   id: string;
@@ -21,51 +22,51 @@ const mockShifts: Shift[] = [
   {
     id: "1",
     name: "Morning Shift",
-    startTime: "08:00",
-    endTime: "13:00",
-    capacity: 120,
+    startTime: "07:00",
+    endTime: "14:00",
+    capacity: 98,
     zone: "full-day",
-    currentOccupancy: 85,
+    currentOccupancy: 0,
     staffAssigned: ["Staff 1", "Staff 2", "Staff 3"]
   },
   {
     id: "2",
-    name: "Afternoon Shift",
-    startTime: "13:00",
-    endTime: "18:00",
-    capacity: 120,
+    name: "Full Day Shift",
+    startTime: "14:00",
+    endTime: "22:00",
+    capacity: 98,
     zone: "full-day",
-    currentOccupancy: 98,
+    currentOccupancy: 0,
     staffAssigned: ["Staff 4", "Staff 5", "Staff 6"]
   },
   {
     id: "3",
     name: "Evening Shift",
     startTime: "18:00",
-    endTime: "23:00",
-    capacity: 100,
+    endTime: "22:00",
+    capacity: 98,
     zone: "full-day",
-    currentOccupancy: 42,
+    currentOccupancy: 0,
     staffAssigned: ["Staff 7", "Staff 8"]
   },
   {
     id: "4",
-    name: "Morning Computer",
-    startTime: "08:00",
-    endTime: "13:00",
-    capacity: 50,
+    name: "Late Evening Shift",
+    startTime: "14:00",
+    endTime: "00:00",
+    capacity: 98,
     zone: "half-day",
-    currentOccupancy: 40,
+    currentOccupancy: 0,
     staffAssigned: ["Staff 9"]
   },
   {
     id: "5",
-    name: "Quiet Study Day",
-    startTime: "09:00",
-    endTime: "17:00",
-    capacity: 30,
+    name: "Late Night Shift",
+    startTime: "07:00",
+    endTime: "00:00",
+    capacity: 98,
     zone: "half-day",
-    currentOccupancy: 22,
+    currentOccupancy: 0,
     staffAssigned: ["Staff 10"]
   }
 ];
