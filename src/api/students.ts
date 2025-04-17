@@ -1,5 +1,6 @@
 // Student API Service
 import { toast } from "sonner";
+import { API_CONFIG } from './config';
 
 export interface Student {
   id: string;
@@ -13,12 +14,14 @@ export interface Student {
 }
 
 // API endpoints configuration
-const API_BASE_URL = "/api/students";
+const API_BASE_URL = `${API_CONFIG.baseURL}/students`;
 
 // Get all students
 export const getAllStudents = async (): Promise<Student[]> => {
   try {
-    const response = await fetch(API_BASE_URL);
+    const response = await fetch(API_BASE_URL, {
+      headers: API_CONFIG.headers,
+    });
     if (!response.ok) throw new Error("Failed to fetch students");
     return await response.json();
   } catch (error) {
@@ -31,7 +34,9 @@ export const getAllStudents = async (): Promise<Student[]> => {
 // Get student by ID
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/${id}`);
+    const response = await fetch(`${API_BASE_URL}/${id}`, {
+      headers: API_CONFIG.headers,
+    });
     if (!response.ok) throw new Error("Student not found");
     return await response.json();
   } catch (error) {
@@ -48,17 +53,11 @@ export const createStudent = async (
   try {
     const response = await fetch(API_BASE_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: API_CONFIG.headers,
       body: JSON.stringify(student),
     });
-
-    if (!response.ok) throw new Error("Creation failed");
-    
-    const newStudent = await response.json();
-    toast.success("Student created successfully");
-    return newStudent;
+    if (!response.ok) throw new Error("Failed to create student");
+    return await response.json();
   } catch (error) {
     toast.error("Failed to create student");
     console.error("Error creating student:", error);

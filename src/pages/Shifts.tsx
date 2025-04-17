@@ -50,7 +50,7 @@ const ShiftsPage = () => {
                   <Clock className="h-5 w-5 mr-2 text-primary" />
                   <div>
                     <h4 className="font-medium">Morning Shift</h4>
-                    <p className="text-sm text-muted-foreground">8:00 AM - 1:00 PM</p>
+                    <p className="text-sm text-muted-foreground">07:00 AM - 02:00 PM</p>
                   </div>
                   <div className="ml-auto">
                     <Button size="sm">Details</Button>
@@ -60,8 +60,8 @@ const ShiftsPage = () => {
                 <div className="flex items-center p-3 bg-muted/50 rounded-md">
                   <Clock className="h-5 w-5 mr-2 text-primary" />
                   <div>
-                    <h4 className="font-medium">Afternoon Shift</h4>
-                    <p className="text-sm text-muted-foreground">1:00 PM - 6:00 PM</p>
+                    <h4 className="font-medium">Evening Shift</h4>
+                    <p className="text-sm text-muted-foreground">02:00 PM - 10:00 PM</p>
                   </div>
                   <div className="ml-auto">
                     <Button size="sm">Details</Button>

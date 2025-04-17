@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import Seat from '../models/Seat';
 import Booking from '../models/Booking';
 
+interface ErrorWithMessage {
+  message: string;
+}
+
 export const createSeat = async (req: Request, res: Response) => {
   try {
     const {
@@ -34,7 +38,8 @@ export const createSeat = async (req: Request, res: Response) => {
       seat
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error creating seat', error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error creating seat', error: errorMessage });
   }
 };
 
@@ -54,7 +59,8 @@ export const getAllSeats = async (req: Request, res: Response) => {
 
     res.json(seats);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching seats', error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error fetching seats', error: errorMessage });
   }
 };
 
@@ -69,7 +75,8 @@ export const getSeatById = async (req: Request, res: Response) => {
 
     res.json(seat);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching seat', error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error fetching seat', error: errorMessage });
   }
 };
 
@@ -117,7 +124,8 @@ export const updateSeat = async (req: Request, res: Response) => {
       seat
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating seat', error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error updating seat', error: errorMessage });
   }
 };
 
@@ -140,7 +148,8 @@ export const deleteSeat = async (req: Request, res: Response) => {
     await seat.deleteOne();
     res.json({ message: 'Seat deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting seat', error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error deleting seat', error: errorMessage });
   }
 };
 
@@ -174,7 +183,8 @@ export const getSeatAvailability = async (req: Request, res: Response) => {
       currentBooking: conflictingBooking
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error checking seat availability', error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error checking seat availability', error: errorMessage });
   }
 };
 
@@ -200,6 +210,7 @@ export const updateSeatStatus = async (req: Request, res: Response) => {
       seat
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating seat status', error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ message: 'Error updating seat status', error: errorMessage });
   }
 }; 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StudentTable from "@/components/dashboard/StudentTable";
+import InteractiveSeatMap from "@/components/dashboard/InteractiveSeatMap";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,8 @@ import {
   File,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Sofa
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,8 +67,10 @@ const StudentsPage = () => {
     phone: "",
     profilePhoto: null,
     idProof: null,
-    status: "pending"
+    status: "pending",
+    seatNumber: ""
   });
+  const [isSeatSelectionOpen, setIsSeatSelectionOpen] = useState(false);
 
   // Student overview statistics
   const studentStats = {
@@ -251,11 +255,10 @@ const StudentsPage = () => {
       formData.append('email', newStudent.email);
       formData.append('phone', newStudent.phone);
       formData.append('status', newStudent.status);
-      
+      formData.append('seatNumber', newStudent.seatNumber);
       if (newStudent.profilePhoto) {
         formData.append('profilePhoto', newStudent.profilePhoto);
       }
-      
       if (newStudent.idProof) {
         formData.append('idProof', newStudent.idProof);
       }
@@ -279,7 +282,8 @@ const StudentsPage = () => {
         phone: "",
         profilePhoto: null,
         idProof: null,
-        status: "pending"
+        status: "pending",
+        seatNumber: ""
       });
 
       // Refresh students list
@@ -348,184 +352,117 @@ const StudentsPage = () => {
                   Add Student
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[800px]">
+              <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2 text-2xl">
-                    <UserCog className="h-6 w-6 text-primary" />
-                    Add New Student
-                  </DialogTitle>
-                  <DialogDescription className="text-base">
-                    Please fill in all the required information to register a new student.
+                  <DialogTitle>Add New Student</DialogTitle>
+                  <DialogDescription>
+                    Fill in the student details below. All fields are required.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-6 py-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Student Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          className="pl-9"
-                          value={newStudent.name}
-                          onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-                          placeholder="Enter student name"
-                        />
-                      </div>
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input
+                        id="name"
+                        value={newStudent.name}
+                        onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
+                        placeholder="Enter full name"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Father's/Husband's Name</Label>
-                      <div className="relative">
-                        <UserCog className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          className="pl-9"
-                          value={newStudent.fatherName}
-                          onChange={(e) => setNewStudent({ ...newStudent, fatherName: e.target.value })}
-                          placeholder="Enter father's/husband's name"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Student ID</Label>
-                      <div className="relative">
-                        <IdCard className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          className="pl-9"
-                          value={newStudent.studentId}
-                          onChange={(e) => setNewStudent({ ...newStudent, studentId: e.target.value })}
-                          placeholder="Enter student ID"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          className="pl-9"
-                          type="email"
-                          value={newStudent.email}
-                          onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
-                          placeholder="Enter email address"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Phone No</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          className="pl-9"
-                          type="tel"
-                          value={newStudent.phone}
-                          onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
-                          placeholder="Enter phone number"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Status</Label>
-                      <Select
-                        value={newStudent.status}
-                        onValueChange={(value) => setNewStudent({ ...newStudent, status: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="active">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                              <span>Active</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="pending">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-yellow-500" />
-                              <span>Pending</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="suspended">
-                            <div className="flex items-center gap-2">
-                              <XCircle className="h-4 w-4 text-red-500" />
-                              <span>Suspended</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Label htmlFor="fatherName">Father's Name</Label>
+                      <Input
+                        id="fatherName"
+                        value={newStudent.fatherName}
+                        onChange={(e) => setNewStudent({ ...newStudent, fatherName: e.target.value })}
+                        placeholder="Enter father's name"
+                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Profile Photo</Label>
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setNewStudent({ ...newStudent, profilePhoto: e.target.files?.[0] })}
-                            className="hidden"
-                            id="profile-photo"
-                          />
-                          <Label
-                            htmlFor="profile-photo"
-                            className="flex items-center gap-2 cursor-pointer border rounded-md p-3 hover:bg-accent"
-                          >
-                            <Image className="h-4 w-4" />
-                            <span>Choose Profile Photo</span>
-                          </Label>
-                        </div>
-                        {newStudent.profilePhoto && (
-                          <span className="text-sm text-muted-foreground">
-                            {(newStudent.profilePhoto as File).name}
-                          </span>
-                        )}
-                      </div>
+                      <Label htmlFor="studentId">Student ID</Label>
+                      <Input
+                        id="studentId"
+                        value={newStudent.studentId}
+                        onChange={(e) => setNewStudent({ ...newStudent, studentId: e.target.value })}
+                        placeholder="Enter student ID"
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Upload ID</Label>
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <Input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            onChange={(e) => setNewStudent({ ...newStudent, idProof: e.target.files?.[0] })}
-                            className="hidden"
-                            id="id-proof"
-                          />
-                          <Label
-                            htmlFor="id-proof"
-                            className="flex items-center gap-2 cursor-pointer border rounded-md p-3 hover:bg-accent"
-                          >
-                            <File className="h-4 w-4" />
-                            <span>Choose ID Document</span>
-                          </Label>
-                        </div>
-                        {newStudent.idProof && (
-                          <span className="text-sm text-muted-foreground">
-                            {(newStudent.idProof as File).name}
-                          </span>
-                        )}
+                      <Label htmlFor="seatNumber">Seat Number</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="seatNumber"
+                          value={newStudent.seatNumber}
+                          onChange={(e) => setNewStudent({ ...newStudent, seatNumber: e.target.value })}
+                          placeholder="Enter seat number"
+                          readOnly
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsSeatSelectionOpen(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <Sofa className="h-4 w-4" />
+                          Select Seat
+                        </Button>
                       </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={newStudent.email}
+                        onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
+                        placeholder="Enter email address"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <Input
+                        id="phone"
+                        value={newStudent.phone}
+                        onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                        placeholder="Enter phone number"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="profilePhoto">Profile Photo</Label>
+                      <Input
+                        id="profilePhoto"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewStudent({ ...newStudent, profilePhoto: e.target.files?.[0] || null })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="idProof">ID Proof</Label>
+                      <Input
+                        id="idProof"
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={(e) => setNewStudent({ ...newStudent, idProof: e.target.files?.[0] || null })}
+                      />
                     </div>
                   </div>
                 </div>
-                <DialogFooter className="gap-2 sm:gap-0">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAddStudentOpen(false)}
-                    className="w-full sm:w-auto"
-                  >
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsAddStudentOpen(false)}>
                     Cancel
                   </Button>
-                  <Button
-                    onClick={handleAddStudent}
-                    disabled={isLoading}
-                    className="w-full sm:w-auto"
-                  >
+                  <Button onClick={handleAddStudent} disabled={isLoading}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Adding Student...
+                        Adding...
                       </>
                     ) : (
                       <>
@@ -621,6 +558,32 @@ const StudentsPage = () => {
             editStudent={handleEditStudent}
           />
         </div>
+
+        {/* Seat Selection Dialog */}
+        <Dialog open={isSeatSelectionOpen} onOpenChange={setIsSeatSelectionOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Select a Seat</DialogTitle>
+              <DialogDescription>
+                Choose an available seat for the student. Green seats are available for selection.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              <InteractiveSeatMap 
+                showOnlyAvailable={true}
+                onSeatSelect={(seatNumber) => {
+                  setNewStudent({ ...newStudent, seatNumber });
+                  setIsSeatSelectionOpen(false);
+                }}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsSeatSelectionOpen(false)}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

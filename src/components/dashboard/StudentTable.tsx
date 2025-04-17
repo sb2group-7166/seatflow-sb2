@@ -30,6 +30,15 @@ import {
   SortAsc,
   SortDesc,
   ChevronRight,
+  MoreVertical,
+  Eye,
+  History,
+  Trash2,
+  LayoutGrid,
+  List,
+  Table,
+  Check,
+  Info,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -41,6 +50,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Student {
   id: string;
@@ -57,6 +72,7 @@ interface Student {
   bookings?: number;
   violations?: number;
   notes?: string;
+  seatNo?: string;
 }
 
 interface StudentTableProps {
@@ -72,7 +88,7 @@ const StudentTable = ({ students, filteredAndSortedStudents, editStudent }: Stud
   const [activeTabs, setActiveTabs] = useState<{[key: string]: string}>({});
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "table">("list");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -168,6 +184,413 @@ const StudentTable = ({ students, filteredAndSortedStudents, editStudent }: Stud
     }
   };
 
+  const renderGridView = () => {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {paginatedStudents.map((student) => (
+          <Card key={student.id} className={`overflow-hidden ${expandedStudent === student.id ? "ring-2 ring-primary" : ""}`}>
+            <CardHeader className="p-4 pb-0">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full overflow-hidden bg-muted border-2 border-primary/20 flex-shrink-0">
+                    {shouldShowPlaceholder(student) ? (
+                      <UserCircle className="h-full w-full text-muted-foreground p-1" />
+                    ) : (
+                      <img 
+                        src={student.photo} 
+                        alt={student.name}
+                        className="h-full w-full object-cover"
+                        onError={() => handleImageError(student.id)}
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <CardTitle className="text-base line-clamp-1">{student.name}</CardTitle>
+                    <CardDescription className="line-clamp-1">{student.email}</CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Badge 
+                    className={`${getStatusColor(student.status)} px-2 py-1 text-xs capitalize`}
+                  >
+                    {student.status}
+                  </Badge>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0"
+                    onClick={() => editStudent(student)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">ID:</span> {student.id}
+                  </div>
+                </div>
+                <div className="flex gap-2 items-center">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{student.lastActive}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <div className="flex items-center gap-1">
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                    <span>{student.bookings || 0} bookings</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <AlertTriangle className={`h-4 w-4 ${Number(student.violations) > 0 ? "text-red-500" : "text-muted-foreground"}`} />
+                    <span>{student.violations || 0} violations</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="p-0 border-t">
+              <Collapsible open={expandedStudent === student.id}>
+                <CollapsibleTrigger asChild className="w-full">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="rounded-none h-10 w-full flex items-center justify-center gap-1"
+                    onClick={() => toggleExpand(student.id)}
+                  >
+                    {expandedStudent === student.id ? "Less details" : "More details"}
+                    {expandedStudent === student.id ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="p-4 pt-0 bg-muted/20">
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium">Editable Information</h4>
+                        <div className="grid grid-cols-1 gap-3">
+                          <div className="flex items-start gap-2">
+                            <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Email</p>
+                              <p className="text-sm font-medium">{student.email || "N/A"}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-2">
+                            <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Phone</p>
+                              <p className="text-sm font-medium">{student.phone || "N/A"}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Address</p>
+                              <p className="text-sm font-medium">{student.address || "N/A"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 justify-end">
+                        <Button 
+                          onClick={() => editStudent(student)}
+                          size="sm" 
+                          className="flex items-center gap-1"
+                        >
+                          <Edit className="h-4 w-4" /> Edit Student
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  const renderListView = () => {
+    return (
+      <Card>
+        <CardContent className="p-0">
+          <div className="border-b">
+            <div className="grid grid-cols-12 py-3 px-4 bg-muted/30 text-sm font-medium">
+              <div className="col-span-1 text-center">Photo</div>
+              <div className="col-span-3 md:col-span-2 border-l pl-3">Student</div>
+              <div className="col-span-2 border-l pl-3">Seat No</div>
+              <div className="col-span-2 border-l pl-3">Status</div>
+              <div className="col-span-2 hidden md:block border-l pl-3">Last Active</div>
+              <div className="col-span-1 text-center border-l pl-3">Actions</div>
+              <div className="col-span-1 text-center border-l pl-3">More</div>
+            </div>
+          </div>
+          <ScrollArea className="max-h-[550px]">
+            <div>
+              {paginatedStudents.map((student) => (
+                <Collapsible key={student.id} open={expandedStudent === student.id}>
+                  <div className={`border-b transition-colors hover:bg-muted/40 ${expandedStudent === student.id ? "bg-muted/40" : ""}`}>
+                    <div className="grid grid-cols-12 py-3 px-4 items-center">
+                      <div className="col-span-1 flex justify-center">
+                        <div className="h-10 w-10 rounded-full overflow-hidden bg-muted flex-shrink-0 border-2 border-primary/20">
+                          {shouldShowPlaceholder(student) ? (
+                            <UserCircle className="h-full w-full text-muted-foreground p-1" />
+                          ) : (
+                            <img 
+                              src={student.photo} 
+                              alt={student.name}
+                              className="h-full w-full object-cover"
+                              onError={() => handleImageError(student.id)}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <div className="col-span-3 md:col-span-2 border-l pl-3">
+                        <div>
+                          <p className="line-clamp-1 font-medium">{student.name}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{student.id}</p>
+                        </div>
+                      </div>
+                      <div className="col-span-2 border-l pl-3">
+                        <p className="text-sm font-medium">{student.seatNo || "N/A"}</p>
+                      </div>
+                      <div className="col-span-2 border-l pl-3">
+                        <Badge 
+                          className={`${getStatusColor(student.status)} px-2 py-1 text-xs capitalize`}
+                        >
+                          {student.status}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2 hidden md:block border-l pl-3">
+                        <div className="flex items-center gap-1 text-sm">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span>{student.lastActive}</span>
+                        </div>
+                      </div>
+                      <div className="col-span-1 flex items-center justify-center gap-1 border-l pl-3">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex items-center gap-1"
+                          onClick={() => editStudent(student)}
+                        >
+                          <Edit className="h-4 w-4" /> Edit
+                        </Button>
+                      </div>
+                      <div className="col-span-1 flex items-center justify-center gap-1 border-l pl-3">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <History className="mr-2 h-4 w-4" />
+                              View History
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600">
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </div>
+                  <CollapsibleContent>
+                    <div className="px-4 py-3 bg-muted/20 border-b">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="h-16 w-16 rounded-full overflow-hidden bg-muted border-2 border-primary/20">
+                            {shouldShowPlaceholder(student) ? (
+                              <UserCircle className="h-full w-full text-muted-foreground p-2" />
+                            ) : (
+                              <img 
+                                src={student.photo} 
+                                alt={student.name}
+                                className="h-full w-full object-cover"
+                                onError={() => handleImageError(student.id)}
+                              />
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold">{student.name}</h3>
+                            <p className="text-sm text-muted-foreground">{student.email}</p>
+                          </div>
+                        </div>
+                        <h4 className="text-sm font-medium border-b pb-2">Editable Student Information</h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-start gap-2 p-2 bg-background/50 rounded-md border">
+                            <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Email</p>
+                              <p className="text-sm font-medium">{student.email || "N/A"}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-2 p-2 bg-background/50 rounded-md border">
+                            <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Phone</p>
+                              <p className="text-sm font-medium">{student.phone || "N/A"}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-start gap-2 p-2 bg-background/50 rounded-md border">
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Address</p>
+                              <p className="text-sm font-medium">{student.address || "N/A"}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2 p-2 bg-background/50 rounded-md border">
+                            <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                            <div>
+                              <p className="text-xs text-muted-foreground">ID Proof</p>
+                              <p className="text-sm font-medium">{student.idProof || "Not submitted"}</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2 justify-end mt-2 pt-2 border-t">
+                          <Button 
+                            onClick={() => editStudent(student)}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="h-4 w-4" /> Edit Student
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
+            </div>
+          </ScrollArea>
+        </CardContent>
+        <CardFooter className="flex items-center justify-between border-t py-3">
+          <div className="text-sm text-muted-foreground">
+            Showing {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} students
+            {filteredStudents.length < filteredAndSortedStudents.length && ` (filtered from ${filteredAndSortedStudents.length})`}
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              Next
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
+    );
+  };
+
+  const renderTableView = () => {
+    return (
+      <Card>
+        <CardContent className="p-0">
+          <div className="border-b">
+            <div className="grid grid-cols-12 py-3 px-4 bg-muted/30 text-sm font-medium">
+              <div className="col-span-1 text-center">Photo</div>
+              <div className="col-span-2 border-l pl-3">Student</div>
+              <div className="col-span-1 border-l pl-3">Seat No</div>
+              <div className="col-span-1 border-l pl-3">Status</div>
+              <div className="col-span-2 border-l pl-3">Email</div>
+              <div className="col-span-2 border-l pl-3">Phone</div>
+              <div className="col-span-2 border-l pl-3">Last Active</div>
+              <div className="col-span-1 text-center border-l pl-3">Actions</div>
+            </div>
+          </div>
+          <ScrollArea className="max-h-[550px]">
+            <div>
+              {paginatedStudents.map((student) => (
+                <div key={student.id} className="grid grid-cols-12 py-3 px-4 items-center border-b hover:bg-muted/40">
+                  <div className="col-span-1 flex justify-center">
+                    <div className="h-8 w-8 rounded-full overflow-hidden bg-muted flex-shrink-0 border-2 border-primary/20">
+                      {shouldShowPlaceholder(student) ? (
+                        <UserCircle className="h-full w-full text-muted-foreground p-1" />
+                      ) : (
+                        <img 
+                          src={student.photo} 
+                          alt={student.name}
+                          className="h-full w-full object-cover"
+                          onError={() => handleImageError(student.id)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <div className="col-span-2 border-l pl-3">
+                    <div>
+                      <p className="line-clamp-1 font-medium">{student.name}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{student.id}</p>
+                    </div>
+                  </div>
+                  <div className="col-span-1 border-l pl-3">
+                    <p className="text-sm">{student.seatNo || "N/A"}</p>
+                  </div>
+                  <div className="col-span-1 border-l pl-3">
+                    <Badge className={`${getStatusColor(student.status)} px-2 py-1 text-xs capitalize`}>
+                      {student.status}
+                    </Badge>
+                  </div>
+                  <div className="col-span-2 border-l pl-3">
+                    <p className="text-sm line-clamp-1">{student.email}</p>
+                  </div>
+                  <div className="col-span-2 border-l pl-3">
+                    <p className="text-sm">{student.phone || "N/A"}</p>
+                  </div>
+                  <div className="col-span-2 border-l pl-3">
+                    <div className="flex items-center gap-1 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>{student.lastActive}</span>
+                    </div>
+                  </div>
+                  <div className="col-span-1 flex items-center justify-center gap-1 border-l pl-3">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                      onClick={() => editStudent(student)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* Search and Filters Bar */}
@@ -210,347 +633,129 @@ const StudentTable = ({ students, filteredAndSortedStudents, editStudent }: Stud
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <div className="flex border rounded-md">
-            <Button 
-              variant={viewMode === "grid" ? "default" : "ghost"} 
-              size="sm" 
-              className="rounded-r-none px-2 sm:px-3"
-              onClick={() => setViewMode("grid")}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>
-            </Button>
-            <Button 
-              variant={viewMode === "list" ? "default" : "ghost"} 
-              size="sm" 
-              className="rounded-l-none px-2 sm:px-3"
-              onClick={() => setViewMode("list")}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><line x1="3" x2="21" y1="6" y2="6" /><line x1="3" x2="21" y1="12" y2="12" /><line x1="3" x2="21" y1="18" y2="18" /></svg>
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2 hover:bg-accent/50">
+                {viewMode === "grid" && <LayoutGrid className="h-4 w-4" />}
+                {viewMode === "list" && <List className="h-4 w-4" />}
+                {viewMode === "table" && <Table className="h-4 w-4" />}
+                <span className="hidden xs:inline">View:</span> {viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuLabel className="flex items-center justify-between">
+                <span>View Options</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Choose how you want to view the student data</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <TooltipProvider>
+                <DropdownMenuItem 
+                  onClick={() => setViewMode("grid")}
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid className="h-4 w-4" />
+                    <span>Grid View</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {viewMode === "grid" && <Check className="h-4 w-4" />}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Card-based layout with visual student information</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setViewMode("list")}
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <List className="h-4 w-4" />
+                    <span>List View</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {viewMode === "list" && <Check className="h-4 w-4" />}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Detailed list with expandable student information</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setViewMode("table")}
+                  className="flex items-center justify-between cursor-pointer hover:bg-accent/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <Table className="h-4 w-4" />
+                    <span>Table View</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {viewMode === "table" && <Check className="h-4 w-4" />}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Traditional spreadsheet-style view with sortable columns</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </DropdownMenuItem>
+              </TooltipProvider>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      {/* Empty State */}
-      {filteredStudents.length === 0 && (
-        <Card className="w-full py-10">
-          <CardContent className="flex flex-col items-center justify-center text-center">
-            <Search className="h-10 w-10 mb-2 opacity-20" />
-            <h3 className="text-lg font-medium">No students found</h3>
-            <p className="text-sm text-muted-foreground">Try adjusting your search or filters</p>
-          </CardContent>
-        </Card>
-      )}
+      {/* View Content */}
+      {viewMode === "grid" && renderGridView()}
+      {viewMode === "list" && renderListView()}
+      {viewMode === "table" && renderTableView()}
 
-      {/* Grid View */}
-      {viewMode === "grid" && filteredStudents.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {paginatedStudents.map((student) => (
-            <Card key={student.id} className={`overflow-hidden ${expandedStudent === student.id ? "ring-2 ring-primary" : ""}`}>
-              <CardHeader className="p-4 pb-0">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full overflow-hidden bg-muted border-2 border-primary/20 flex-shrink-0">
-                      {shouldShowPlaceholder(student) ? (
-                        <UserCircle className="h-full w-full text-muted-foreground p-1" />
-                      ) : (
-                        <img 
-                          src={student.photo} 
-                          alt={student.name}
-                          className="h-full w-full object-cover"
-                          onError={() => handleImageError(student.id)}
-                        />
-                      )}
-                    </div>
-                    <div>
-                      <CardTitle className="text-base line-clamp-1">{student.name}</CardTitle>
-                      <CardDescription className="line-clamp-1">{student.email}</CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Badge 
-                      className={`${getStatusColor(student.status)} px-2 py-1 text-xs capitalize`}
-                    >
-                      {student.status}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 w-8 p-0"
-                      onClick={() => editStudent(student)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">ID:</span> {student.id}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{student.lastActive}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      <span>{student.bookings || 0} bookings</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <AlertTriangle className={`h-4 w-4 ${Number(student.violations) > 0 ? "text-red-500" : "text-muted-foreground"}`} />
-                      <span>{student.violations || 0} violations</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="p-0 border-t">
-                <Collapsible open={expandedStudent === student.id}>
-                  <CollapsibleTrigger asChild className="w-full">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="rounded-none h-10 w-full flex items-center justify-center gap-1"
-                      onClick={() => toggleExpand(student.id)}
-                    >
-                      {expandedStudent === student.id ? "Less details" : "More details"}
-                      {expandedStudent === student.id ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="p-4 pt-0 bg-muted/20">
-                      <div className="grid grid-cols-1 gap-6">
-                        <div className="space-y-3">
-                          <h4 className="text-sm font-medium">Editable Information</h4>
-                          <div className="grid grid-cols-1 gap-3">
-                            <div className="flex items-start gap-2">
-                              <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">Email</p>
-                                <p className="text-sm font-medium">{student.email || "N/A"}</p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-start gap-2">
-                              <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">Phone</p>
-                                <p className="text-sm font-medium">{student.phone || "N/A"}</p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-start gap-2">
-                              <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">Address</p>
-                                <p className="text-sm font-medium">{student.address || "N/A"}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-2 justify-end">
-                          <Button 
-                            onClick={() => editStudent(student)}
-                            size="sm" 
-                            className="flex items-center gap-1"
-                          >
-                            <Edit className="h-4 w-4" /> Edit Student
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* List View */}
-      {viewMode === "list" && filteredStudents.length > 0 && (
-        <Card>
-          <CardContent className="p-0">
-            <div className="border-b">
-              <div className="grid grid-cols-12 py-3 px-4 bg-muted/30 text-sm font-medium">
-                <div className="col-span-1 text-center">Photo</div>
-                <div className="col-span-4 md:col-span-3 border-l pl-3">Student</div>
-                <div className="col-span-3 md:col-span-2 border-l pl-3">Status</div>
-                <div className="col-span-2 hidden md:block border-l pl-3">Last Active</div>
-                <div className="col-span-4 md:col-span-4 text-center border-l pl-3">Actions</div>
-              </div>
-            </div>
-            <ScrollArea className="max-h-[550px]">
-              <div>
-                {paginatedStudents.map((student) => (
-                  <Collapsible key={student.id} open={expandedStudent === student.id}>
-                    <div className={`border-b transition-colors hover:bg-muted/40 ${expandedStudent === student.id ? "bg-muted/40" : ""}`}>
-                      <div className="grid grid-cols-12 py-3 px-4 items-center">
-                        <div className="col-span-1 flex justify-center">
-                          <div className="h-10 w-10 rounded-full overflow-hidden bg-muted flex-shrink-0 border-2 border-primary/20">
-                            {shouldShowPlaceholder(student) ? (
-                              <UserCircle className="h-full w-full text-muted-foreground p-1" />
-                            ) : (
-                              <img 
-                                src={student.photo} 
-                                alt={student.name}
-                                className="h-full w-full object-cover"
-                                onError={() => handleImageError(student.id)}
-                              />
-                            )}
-                          </div>
-                        </div>
-                        <div className="col-span-4 md:col-span-3 border-l pl-3">
-                          <div>
-                            <p className="line-clamp-1 font-medium">{student.name}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-1">{student.id}</p>
-                          </div>
-                        </div>
-                        <div className="col-span-3 md:col-span-2 border-l pl-3">
-                          <Badge 
-                            className={`${getStatusColor(student.status)} px-2 py-1 text-xs capitalize`}
-                          >
-                            {student.status}
-                          </Badge>
-                        </div>
-                        <div className="col-span-2 hidden md:block border-l pl-3">
-                          <div className="flex items-center gap-1 text-sm">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>{student.lastActive}</span>
-                          </div>
-                        </div>
-                        <div className="col-span-4 md:col-span-4 flex items-center justify-center gap-1 border-l pl-3">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex items-center gap-1"
-                            onClick={() => editStudent(student)}
-                          >
-                            <Edit className="h-4 w-4" /> Edit
-                          </Button>
-                          <CollapsibleTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-8 w-8 p-0"
-                              onClick={() => toggleExpand(student.id)}
-                            >
-                              {expandedStudent === student.id ? (
-                                <ChevronUp className="h-4 w-4" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </CollapsibleTrigger>
-                        </div>
-                      </div>
-                    </div>
-                    <CollapsibleContent>
-                      <div className="px-4 py-3 bg-muted/20 border-b">
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="h-16 w-16 rounded-full overflow-hidden bg-muted border-2 border-primary/20">
-                              {shouldShowPlaceholder(student) ? (
-                                <UserCircle className="h-full w-full text-muted-foreground p-2" />
-                              ) : (
-                                <img 
-                                  src={student.photo} 
-                                  alt={student.name}
-                                  className="h-full w-full object-cover"
-                                  onError={() => handleImageError(student.id)}
-                                />
-                              )}
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-semibold">{student.name}</h3>
-                              <p className="text-sm text-muted-foreground">{student.email}</p>
-                            </div>
-                          </div>
-                          <h4 className="text-sm font-medium border-b pb-2">Editable Student Information</h4>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex items-start gap-2 p-2 bg-background/50 rounded-md border">
-                              <Mail className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">Email</p>
-                                <p className="text-sm font-medium">{student.email || "N/A"}</p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-start gap-2 p-2 bg-background/50 rounded-md border">
-                              <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">Phone</p>
-                                <p className="text-sm font-medium">{student.phone || "N/A"}</p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-start gap-2 p-2 bg-background/50 rounded-md border">
-                              <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">Address</p>
-                                <p className="text-sm font-medium">{student.address || "N/A"}</p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-start gap-2 p-2 bg-background/50 rounded-md border">
-                              <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                              <div>
-                                <p className="text-xs text-muted-foreground">ID Proof</p>
-                                <p className="text-sm font-medium">{student.idProof || "Not submitted"}</p>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex gap-2 justify-end mt-2 pt-2 border-t">
-                            <Button 
-                              onClick={() => editStudent(student)}
-                              className="flex items-center gap-1"
-                            >
-                              <Edit className="h-4 w-4" /> Edit Student
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-          <CardFooter className="flex items-center justify-between border-t py-3">
-            <div className="text-sm text-muted-foreground">
-              Showing {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} students
-              {filteredStudents.length < filteredAndSortedStudents.length && ` (filtered from ${filteredAndSortedStudents.length})`}
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handlePrevPage}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages || totalPages === 0}
-              >
-                Next
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
+      {/* Pagination */}
+      {viewMode === "list" && (
+        <CardFooter className="flex items-center justify-between border-t py-3">
+          <div className="text-sm text-muted-foreground">
+            Showing {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} students
+            {filteredStudents.length < filteredAndSortedStudents.length && ` (filtered from ${filteredAndSortedStudents.length})`}
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages || totalPages === 0}
+            >
+              Next
+            </Button>
+          </div>
+        </CardFooter>
       )}
     </div>
   );

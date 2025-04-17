@@ -20,7 +20,7 @@ interface SeatRowGroup {
   joinedRowNumber: number;
 }
 
-const statuses: SeatStatus[] = ["available", "occupied", "reserved", "maintenance"];
+const statuses: SeatStatus[] = ["available", "occupied", "pre-booked"];
 
 export const useSeatLayout = () => {
   const [seatRows, setSeatRows] = useState<SeatRowGroup[]>([]);
@@ -62,16 +62,15 @@ export const useSeatLayout = () => {
   }, [createSeats]);
 
   const generateSeat = (seatNumber: number): Seat => {
-    const randomStatus = statuses[Math.floor(Math.random() * 4)];
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
     return {
       id: `S-${seatNumber}`,
       number: `${seatNumber}`,
       status: randomStatus,
-      user:
-        randomStatus === "occupied" || randomStatus === "reserved"
-          ? `Student #${Math.floor(Math.random() * 1000) + 1000}`
-          : undefined,
-      timeRemaining: randomStatus === "reserved" ? Math.floor(Math.random() * 120) + 10 : undefined,
+      user: randomStatus === "occupied" || randomStatus === "pre-booked"
+        ? `Student #${Math.floor(Math.random() * 1000) + 1000}`
+        : undefined,
+      timeRemaining: randomStatus === "pre-booked" ? Math.floor(Math.random() * 120) + 10 : undefined,
     };
   };
 
