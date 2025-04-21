@@ -32,6 +32,27 @@ const SeatsPage = () => {
     setActiveTab("view");
   };
 
+  const handleCardClick = (type: string) => {
+    switch (type) {
+      case 'total':
+        setActiveTab("view");
+        // You can add additional logic here
+        break;
+      case 'available':
+        setActiveTab("view");
+        // Filter to show only available seats
+        break;
+      case 'occupied':
+        setActiveTab("view");
+        // Filter to show only occupied seats
+        break;
+      case 'prebooked':
+        setActiveTab("view");
+        // Filter to show only pre-booked seats
+        break;
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -44,7 +65,10 @@ const SeatsPage = () => {
 
         {/* Modern Seat Status Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <Card 
+            className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 cursor-pointer transition-all duration-200 hover:shadow-lg"
+            onClick={() => handleCardClick('total')}
+          >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium text-blue-900">Total Seats</CardTitle>
@@ -52,12 +76,15 @@ const SeatsPage = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-900">98</div>
+              <div className="text-3xl font-bold text-amber-600">98</div>
               <p className="text-xs text-blue-700 mt-2">Library capacity</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <Card 
+            className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 cursor-pointer transition-all duration-200 hover:shadow-lg"
+            onClick={() => handleCardClick('available')}
+          >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium text-green-900">Available Seats</CardTitle>
@@ -65,12 +92,15 @@ const SeatsPage = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-900">45</div>
+              <div className="text-3xl font-bold text-amber-600">45</div>
               <p className="text-xs text-green-700 mt-2">Ready for use</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+          <Card 
+            className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 cursor-pointer transition-all duration-200 hover:shadow-lg"
+            onClick={() => handleCardClick('occupied')}
+          >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium text-red-900">Occupied Seats</CardTitle>
@@ -78,12 +108,15 @@ const SeatsPage = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-900">53</div>
+              <div className="text-3xl font-bold text-amber-600">53</div>
               <p className="text-xs text-red-700 mt-2">Currently in use</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <Card 
+            className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 cursor-pointer transition-all duration-200 hover:shadow-lg"
+            onClick={() => handleCardClick('prebooked')}
+          >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium text-purple-900">Pre-booked</CardTitle>
@@ -91,7 +124,7 @@ const SeatsPage = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-purple-900">0</div>
+              <div className="text-3xl font-bold text-amber-600">0</div>
               <p className="text-xs text-purple-700 mt-2">Reserved for later</p>
             </CardContent>
           </Card>

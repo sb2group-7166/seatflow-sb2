@@ -1,6 +1,5 @@
-
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Users, 
@@ -11,7 +10,10 @@ import {
   BarChart4, 
   Settings, 
   LogOut,
-  Menu
+  Menu,
+  Receipt,
+  TrendingUp,
+  TrendingDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,6 +24,9 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ isCollapsed, toggleSidebar }: SidebarProps) => {
+  const location = useLocation();
+  const isPaymentsPage = location.pathname === '/payments';
+
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/" },
     { icon: Users, label: "Students", path: "/students" },
