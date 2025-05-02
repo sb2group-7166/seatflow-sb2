@@ -1,96 +1,66 @@
 import mongoose from 'mongoose';
-import { connectDB, disconnectDB } from '../config/database';
-import User from '../models/User';
-import Seat from '../models/Seat';
-import { Student } from '../models/student.model';
-import Booking from '../models/Booking';
-import Payment from '../models/payment.model';
+import { config } from '../config';
 
-const initDatabase = async () => {
+async function initializeDatabase() {
   try {
-    await connectDB();
+    console.log('🔄 Connecting to MongoDB...');
+    await mongoose.connect(config.mongoUri);
+    console.log('✅ Connected to MongoDB successfully');
 
-    // Clear existing data
-    await User.deleteMany({});
-    await Seat.deleteMany({});
-    await Student.deleteMany({});
-    await Booking.deleteMany({});
-    await Payment.deleteMany({});
+    // Create collections with indexes
+    const db = mongoose.connection.db;
 
-    // Create admin user
-    const adminUser = await User.create({
-      name: 'Admin User',
-      email: 'admin@seatflow.com',
-      password: 'admin123',
-      role: 'admin',
-      isActive: true
-    });
+    console.log('📦 Creating collections and indexes...');
 
-    // Create sample seats
-    const seats = await Seat.create([
-      {
-        seatNumber: 'A1',
-        section: 'A',
-        status: 'available',
-        floor: 1,
-        type: 'standard',
-        position: { x: 0, y: 0 },
-        features: ['power_outlet', 'usb_port'],
-        isActive: true
-      },
-      {
-        seatNumber: 'B1',
-        section: 'B',
-        status: 'available',
-        floor: 1,
-        type: 'premium',
-        position: { x: 1, y: 0 },
-        features: ['power_outlet', 'usb_port', 'adjustable_height'],
-        isActive: true
-      }
-    ]);
+    // Users collection
+    await db.createCollection('users');
+    await db.collection('users').createIndex({ email: 1 }, { unique: true });
+    await db.collection('users').createIndex({ role: 1 });
 
-    // Create sample student
-    const student = await Student.create({
-      name: 'John Doe',
-      fatherName: 'Michael Doe',
-      studentId: 'STD001',
-      email: 'john.doe@example.com',
-      phone: '1234567890',
-      status: 'active'
-    });
+    // Financial collection
+    await db.createCollection('financials');
+    await db.collection('financials').createIndex({ createdAt: 1 });
+    await db.collection('financials').createIndex({ status: 1 });
+    await db.collection('financials').createIndex({ studentId: 1 });
+    await db.collection('financials').createIndex({ type: 1 });
 
-    // Create sample booking
-    const booking = await Booking.create({
-      user: adminUser._id,
-      seat: seats[0]._id,
-      startTime: new Date(),
-      endTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-      status: 'confirmed',
-      bookingType: 'daily',
-      price: {
-        amount: 100,
-        currency: 'INR'
-      },
-      paymentStatus: 'paid'
-    });
+    // Operations collection
+    await db.createCollection('operations');
+    await db.collection('operations').createIndex({ startTime: 1 });
+    await db.collection('operations').createIndex({ endTime: 1 });
+    await db.collection('operations').createIndex({ type: 1 });
+    await db.collection('operations').createIndex({ status: 1 });
+    await db.collection('operations').createIndex({ assignedTo: 1 });
 
-    // Create sample payment
-    await Payment.create({
-      studentId: student._id,
-      amount: 100,
-      type: 'seat_booking',
-      status: 'completed',
-      paymentDate: new Date(),
-      description: 'Daily seat booking payment'
-    });
+    // Reports collection
+    await db.createCollection('reports');
+    await db.collection('reports').createIndex({ createdAt: 1 });
+    await db.collection('reports').createIndex({ type: 1 });
+    await db.collection('reports').createIndex({ status: 1 });
+    await db.collection('reports').createIndex({ generatedBy: 1 });
 
-    console.log('Database initialized successfully');
+    // Create default admin user if not exists
+    const adminExists = await db.collection('users').findOne({ role: 'admin' });
+    if (!adminExists) {
+      await db.collection('users').insertOne({
+        name: 'Admin',
+        email: 'admin@seatflow.com',
+        password: '$2a$10$YourHashedPasswordHere', // Remember to change this
+        role: 'admin',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      console.log('👤 Created default admin user');
+    }
+
+    console.log('✅ Database initialization completed successfully');
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error('❌ Error initializing database:', error);
+    process.exit(1);
   } finally {
-    await disconnectDB();
+    await mongoose.disconnect();
   }
-};
+}
 
-initDatabase(); 
+// Run the initialization
+initializeDatabase(); 

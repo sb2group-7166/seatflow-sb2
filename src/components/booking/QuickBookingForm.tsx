@@ -7,19 +7,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, X, Loader2, User, MapPin, Clock4, Bookmark, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, X, Loader2, User, MapPin, Clock4, Bookmark, AlertCircle, CheckCircle2, Camera, Phone, Mail, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface BookingFormData {
   studentId: string;
+  studentName: string;
+  contactNumber: string;
+  profilePhoto: File | null;
   seatId: string;
   date: Date | undefined;
   startTime: string;
   endTime: string;
   shift: string;
   notes: string;
+}
+
+interface BookingData {
+  id: string;
+  studentId: string;
+  studentName: string;
+  seatId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  shift: string;
+  status: 'active' | 'completed' | 'cancelled';
+  notes: string;
+  createdAt: string;
 }
 
 interface ApiError {
@@ -36,8 +56,15 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingStudentId, setIsLoadingStudentId] = useState(true);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isSeatAvailable, setIsSeatAvailable] = useState<boolean | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [bookingData, setBookingData] = useState<BookingData | null>(null);
   const [formData, setFormData] = useState<BookingFormData>({
     studentId: '',
+    studentName: '',
+    contactNumber: '',
+    profilePhoto: null,
     seatId: '',
     date: undefined,
     startTime: '',
@@ -51,17 +78,11 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
     const fetchLastStudentId = async () => {
       try {
         // Replace with actual API call
-        // const response = await fetch('/api/students/last-id');
-        // const data = await response.json();
-        
-        // Mock API response
-        const mockLastId = 'STD20230099'; // This would come from your API
+        const mockLastId = 'STD20230099';
         const newId = generateNextStudentId(mockLastId);
-        
         setFormData(prev => ({ ...prev, studentId: newId }));
       } catch (error) {
         console.error('Error fetching last student ID:', error);
-        // Fallback to current year if API fails
         const currentYear = new Date().getFullYear();
         const fallbackId = `STD${currentYear}0001`;
         setFormData(prev => ({ ...prev, studentId: fallbackId }));
@@ -73,25 +94,45 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
     fetchLastStudentId();
   }, []);
 
+  // Check seat availability when relevant fields change
+  useEffect(() => {
+    const checkSeatAvailability = async () => {
+      if (!formData.seatId || !formData.date || !formData.startTime || !formData.endTime) {
+        setIsSeatAvailable(null);
+        return;
+      }
+
+      setIsCheckingAvailability(true);
+      try {
+        // Replace with actual API call
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+        const isAvailable = Math.random() > 0.3; // Mock availability check
+        setIsSeatAvailable(isAvailable);
+      } catch (error) {
+        console.error('Error checking seat availability:', error);
+        setIsSeatAvailable(null);
+      } finally {
+        setIsCheckingAvailability(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(checkSeatAvailability, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [formData.seatId, formData.date, formData.startTime, formData.endTime]);
+
   const generateNextStudentId = (lastId: string): string => {
-    // Extract year and number from last ID (format: STDYYYYXXXX)
     const year = lastId.substring(3, 7);
     const number = parseInt(lastId.substring(7));
-    
-    // Get current year
     const currentYear = new Date().getFullYear().toString();
     
-    // If year is different, start from 0001
     if (year !== currentYear) {
       return `STD${currentYear}0001`;
     }
     
-    // Increment the number and pad with zeros
     const nextNumber = (number + 1).toString().padStart(4, '0');
     return `STD${currentYear}${nextNumber}`;
   };
 
-  // Mock data - replace with actual API calls
   const shifts = [
     { id: 'morning', name: 'Morning (07:00 AM - 02:00 PM)' },
     { id: 'evening', name: 'Evening (02:00 PM - 10:00 PM)' },
@@ -105,96 +146,221 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
     return `${hour}:00`;
   });
 
+  // Update booking page
+  const updateBookingPage = async (booking: BookingData) => {
+    try {
+      // Simulate API call to update booking page
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Log the update
+      console.log('Booking page updated:', {
+        timestamp: new Date(),
+        booking,
+        action: 'booking_created'
+      });
+
+      // Update the seat status in the InteractiveSeatMap
+      const event = new CustomEvent('seatStatusUpdate', {
+        detail: {
+          seatId: booking.seatId,
+          status: 'occupied',
+          student: {
+            id: booking.studentId,
+            name: booking.studentName,
+            status: 'active'
+          }
+        }
+      });
+      window.dispatchEvent(event);
+
+    } catch (error) {
+      console.error('Error updating booking page:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
+    try {
     // Validate form data
     if (!formData.studentId || !formData.seatId || !formData.date || !formData.startTime || !formData.endTime || !formData.shift) {
-      setError('Please fill in all required fields');
-      setIsSubmitting(false);
-      return;
-    }
+        throw new Error('Please fill in all required fields');
+      }
 
-    // Validate time range
+      if (!isSeatAvailable) {
+        throw new Error('Selected seat is not available for the chosen time slot');
+      }
+
     const startTime = parseInt(formData.startTime.split(':')[0]);
     const endTime = parseInt(formData.endTime.split(':')[0]);
     if (endTime <= startTime) {
-      setError('End time must be after start time');
-      setIsSubmitting(false);
-      return;
+        throw new Error('End time must be after start time');
     }
 
-    try {
       // Format the date and time for the API
       const formattedDate = formData.date ? format(formData.date, 'yyyy-MM-dd') : '';
-      const bookingData = {
-        ...formData,
+      const bookingData: BookingData = {
+        id: `BK${Date.now()}`,
+        studentId: formData.studentId,
+        studentName: 'John Doe', // Replace with actual student name from API
+        seatId: formData.seatId,
         date: formattedDate,
         startTime: `${formattedDate}T${formData.startTime}:00`,
-        endTime: `${formattedDate}T${formData.endTime}:00`
+        endTime: `${formattedDate}T${formData.endTime}:00`,
+        shift: formData.shift,
+        status: 'active',
+        notes: formData.notes,
+        createdAt: new Date().toISOString()
       };
 
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(bookingData)
-      });
+      // Simulate API call to create booking
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (!response.ok) {
-        const errorData: ApiError = await response.json();
-        throw new Error(errorData.message || 'Failed to create booking');
-      }
+      // Update booking page
+      await updateBookingPage(bookingData);
 
-      const data = await response.json();
+      // Show success state
+      setBookingData(bookingData);
+      setShowSuccess(true);
+      toast.success('Booking created successfully!');
       
-      // Close the form and show success message
+      // Close form after delay
+      setTimeout(() => {
       onClose();
       navigate('/bookings', { 
         state: { 
           message: 'Booking created successfully',
-          bookingId: data.id 
+            bookingId: bookingData.id 
         } 
       });
+      }, 2000);
+
     } catch (error) {
       console.error('Booking error:', error);
       setError(error instanceof Error ? error.message : 'Failed to create booking');
+      toast.error('Failed to create booking');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size should be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload an image file');
+        return;
+      }
+      setFormData(prev => ({ ...prev, profilePhoto: file }));
+      toast.success('Profile photo uploaded successfully');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size should be less than 5MB');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload an image file');
+        return;
+      }
+      setFormData(prev => ({ ...prev, profilePhoto: file }));
+      toast.success('Profile photo uploaded successfully');
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-8"
+      >
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
           Quick Booking
         </h2>
-        <p className="text-sm text-muted-foreground">Book a seat in just a few clicks</p>
-      </div>
+        <p className="text-sm text-muted-foreground mt-2">Book a seat in just a few clicks</p>
+      </motion.div>
       
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {showSuccess && bookingData ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-4"
+        >
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-8 h-8 text-green-600" />
+          </div>
+          <h3 className="text-lg font-semibold">Booking Created Successfully!</h3>
+          <div className="text-sm text-muted-foreground">
+            <p>Booking ID: {bookingData.id}</p>
+            <p>Seat: {bookingData.seatId}</p>
+            <p>Date: {format(new Date(bookingData.date), 'PPP')}</p>
+            <p>Time: {bookingData.startTime.split('T')[1].slice(0, 5)} - {bookingData.endTime.split('T')[1].slice(0, 5)}</p>
+          </div>
+          <p className="text-sm text-muted-foreground">Redirecting to bookings page...</p>
+        </motion.div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <AnimatePresence>
         {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-        )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Student Information Section */}
-        <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Student Information</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Tabs defaultValue="student" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsTrigger value="student" className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Student Info
+              </TabsTrigger>
+              <TabsTrigger value="booking" className="flex items-center gap-2">
+                <Bookmark className="h-4 w-4" />
+                Booking Details
+              </TabsTrigger>
+              <TabsTrigger value="time" className="flex items-center gap-2">
+                <Clock4 className="h-4 w-4" />
+                Time Selection
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="student">
+              <Card className="border-none shadow-lg">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="studentId" className="text-sm font-medium">Student ID <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="studentId" className="text-sm font-medium flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" />
+                          Student ID <span className="text-red-500">*</span>
+                        </Label>
               <div className="relative">
                 <Input
                   id="studentId"
@@ -218,28 +384,140 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="seatId" className="text-sm font-medium">Seat Number <span className="text-red-500">*</span></Label>
+                        <Label htmlFor="studentName" className="text-sm font-medium flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" />
+                          Student Name <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="studentName"
+                          value={formData.studentName}
+                          onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+                          placeholder="Enter student name"
+                          required
+                          className="focus:ring-2 focus:ring-primary/20"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="contactNumber" className="text-sm font-medium flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-primary" />
+                          Contact Number <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                          id="contactNumber"
+                          value={formData.contactNumber}
+                          onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                          placeholder="Enter contact number"
+                          required
+                          type="tel"
+                          pattern="[0-9]{10}"
+                          className="focus:ring-2 focus:ring-primary/20"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Enter 10-digit mobile number
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="profilePhoto" className="text-sm font-medium flex items-center gap-2">
+                          <Camera className="h-4 w-4 text-primary" />
+                          Profile Photo
+                        </Label>
+                        <div 
+                          className="relative w-40 h-40 mx-auto rounded-full overflow-hidden border-2 border-dashed border-gray-300 hover:border-primary/50 transition-colors cursor-pointer"
+                          onDragOver={handleDragOver}
+                          onDrop={handleDrop}
+                        >
+                          {formData.profilePhoto ? (
+                            <motion.img
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              src={URL.createObjectURL(formData.profilePhoto)}
+                              alt="Profile preview"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <motion.div 
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              className="w-full h-full flex flex-col items-center justify-center bg-gray-50"
+                            >
+                              <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                              <p className="text-xs text-gray-500 text-center px-4">
+                                Drag & drop or click to upload
+                              </p>
+                            </motion.div>
+                          )}
+                          <input
+                            type="file"
+                            id="profilePhoto"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-muted-foreground">
+                            Click or drag to upload profile photo
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Max size: 5MB, Format: JPG, PNG
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="booking">
+              <Card className="border-none shadow-lg">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="seatId" className="text-sm font-medium flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          Seat Number <span className="text-red-500">*</span>
+                        </Label>
+                        <div className="relative">
               <Input
                 id="seatId"
                 value={formData.seatId}
                 onChange={(e) => setFormData({ ...formData, seatId: e.target.value })}
                 placeholder="Enter seat number"
                 required
-                className="focus:ring-2 focus:ring-primary/20"
-              />
+                            className={cn(
+                              "focus:ring-2 focus:ring-primary/20",
+                              isCheckingAvailability && "animate-pulse"
+                            )}
+                          />
+                          {isCheckingAvailability && (
+                            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                          )}
+                          {isSeatAvailable === true && (
+                            <CheckCircle2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-green-500" />
+                          )}
+                          {isSeatAvailable === false && (
+                            <X className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-red-500" />
+                          )}
             </div>
-          </div>
+                        {isSeatAvailable === true && (
+                          <p className="text-xs text-green-500">Seat is available for selected time slot</p>
+                        )}
+                        {isSeatAvailable === false && (
+                          <p className="text-xs text-red-500">Seat is not available for selected time slot</p>
+                        )}
         </div>
 
-        {/* Booking Details Section */}
-        <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-          <div className="flex items-center gap-2">
-            <Bookmark className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Booking Details</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Date <span className="text-red-500">*</span></Label>
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <CalendarIcon className="h-4 w-4 text-primary" />
+                          Date <span className="text-red-500">*</span>
+                        </Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -259,13 +537,19 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
                     selected={formData.date}
                     onSelect={(date) => setFormData({ ...formData, date })}
                     initialFocus
+                              disabled={(date) => date < new Date()}
                   />
                 </PopoverContent>
               </Popover>
+                      </div>
             </div>
 
+                    <div className="space-y-6">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Shift <span className="text-red-500">*</span></Label>
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-primary" />
+                          Shift <span className="text-red-500">*</span>
+                        </Label>
               <Select
                 value={formData.shift}
                 onValueChange={(value) => setFormData({ ...formData, shift: value })}
@@ -282,18 +566,35 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
                 </SelectContent>
               </Select>
             </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="notes" className="text-sm font-medium flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          Additional Notes
+                        </Label>
+                        <Input
+                          id="notes"
+                          value={formData.notes}
+                          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                          placeholder="Additional notes (optional)"
+                          className="focus:ring-2 focus:ring-primary/20"
+                        />
           </div>
         </div>
-
-        {/* Time Selection Section */}
-        <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-          <div className="flex items-center gap-2">
-            <Clock4 className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Time Selection</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="time">
+              <Card className="border-none shadow-lg">
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Start Time <span className="text-red-500">*</span></Label>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Clock4 className="h-4 w-4 text-primary" />
+                        Start Time <span className="text-red-500">*</span>
+                      </Label>
               <Select
                 value={formData.startTime}
                 onValueChange={(value) => setFormData({ ...formData, startTime: value })}
@@ -312,7 +613,10 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">End Time <span className="text-red-500">*</span></Label>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Clock4 className="h-4 w-4 text-primary" />
+                        End Time <span className="text-red-500">*</span>
+                      </Label>
               <Select
                 value={formData.endTime}
                 onValueChange={(value) => setFormData({ ...formData, endTime: value })}
@@ -330,34 +634,19 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
               </Select>
             </div>
           </div>
-        </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
-        {/* Additional Notes Section */}
-        <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold">Additional Notes</h3>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="notes" className="text-sm font-medium">Notes</Label>
-            <Input
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Additional notes (optional)"
-              className="focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-4">
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
               type="button" 
               variant="outline" 
               onClick={onClose}
               disabled={isSubmitting}
-              className="min-w-[100px]"
+                className="min-w-[120px]"
             >
               Cancel
             </Button>
@@ -365,14 +654,22 @@ const QuickBookingForm: React.FC<QuickBookingFormProps> = ({ onClose }) => {
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
               type="submit"
-              disabled={isSubmitting}
-              className="min-w-[100px] bg-primary hover:bg-primary/90"
+                disabled={isSubmitting || !isSeatAvailable}
+                className="min-w-[120px] bg-primary hover:bg-primary/90"
             >
-              {isSubmitting ? 'Creating...' : 'Create Booking'}
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating...
+                  </div>
+                ) : (
+                  'Create Booking'
+                )}
             </Button>
           </motion.div>
         </div>
       </form>
+      )}
     </div>
   );
 };

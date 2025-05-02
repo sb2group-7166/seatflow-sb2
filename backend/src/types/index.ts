@@ -1,6 +1,8 @@
 import { Document } from 'mongoose';
 import { Request } from 'express';
 
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -16,7 +18,7 @@ export interface IUser extends Document {
 
 export interface AuthRequest<P = {}, ResBody = {}, ReqBody = {}> extends Request<P, ResBody, ReqBody> {
   user?: {
-    userId: string;
+    _id: string;
     role: string;
   };
 }

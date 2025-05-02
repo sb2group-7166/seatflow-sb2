@@ -1,68 +1,59 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import User from '../models/User';
+import { AuthRequest } from '../types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+interface JwtPayload {
+  id: string;
+  role: string;
+}
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
-        userId: string;
+        _id: string;
         role: string;
       };
     }
   }
 }
 
-export const authenticate = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ message: 'No token provided' });
-    }
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-    const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ message: 'Invalid token format' });
+      return res.status(401).json({ message: 'Access token is required' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId: string;
-      role: string;
-    };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
 
     req.user = {
-      userId: decoded.userId,
-      role: decoded.role
+      _id: user._id,
+      role: user.role
     };
 
     next();
-  } catch (error: any) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({ message: 'Invalid token' });
-    }
-    if (error instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({ message: 'Token expired' });
-    }
-    res.status(500).json({ 
-      message: 'Authentication error', 
-      error: error.message || 'Unknown error' 
-    });
+  } catch (error) {
+    return res.status(403).json({ message: 'Invalid or expired token' });
   }
 };
 
 export const authorize = (roles: string[]) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
 
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Not authorized to access this resource' });
+      return res.status(403).json({ message: 'Insufficient permissions' });
     }
 
     next();

@@ -1,11 +1,22 @@
 import express from 'express';
 import Payment from '../models/payment.model';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
+interface CreatePaymentBody {
+  studentId: string;
+  amount: number;
+  type: string;
+  status: string;
+}
+
+interface UpdatePaymentStatusBody {
+  status: string;
+}
+
 // Get all payments
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const payments = await Payment.find().populate('studentId');
     res.json(payments);
@@ -15,7 +26,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get payment by ID
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticate, async (req: express.Request<{ id: string }>, res) => {
   try {
     const payment = await Payment.findById(req.params.id).populate('studentId');
     if (!payment) {
@@ -28,7 +39,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Create new payment
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticate, async (req: express.Request<{}, {}, CreatePaymentBody>, res) => {
   try {
     const payment = new Payment(req.body);
     await payment.save();
@@ -39,7 +50,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Update payment status
-router.put('/:id/status', authenticateToken, async (req, res) => {
+router.put('/:id/status', authenticate, async (req: express.Request<{ id: string }, {}, UpdatePaymentStatusBody>, res) => {
   try {
     const { status } = req.body;
     const payment = await Payment.findByIdAndUpdate(
@@ -57,7 +68,7 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
 });
 
 // Get payments by student
-router.get('/student/:studentId', authenticateToken, async (req, res) => {
+router.get('/student/:studentId', authenticate, async (req: express.Request<{ studentId: string }>, res) => {
   try {
     const payments = await Payment.find({ studentId: req.params.studentId });
     res.json(payments);
@@ -67,7 +78,7 @@ router.get('/student/:studentId', authenticateToken, async (req, res) => {
 });
 
 // Get payment summary
-router.get('/summary/monthly', authenticateToken, async (req, res) => {
+router.get('/summary/monthly', authenticate, async (req, res) => {
   try {
     const currentDate = new Date();
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);

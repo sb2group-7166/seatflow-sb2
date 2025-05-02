@@ -38,7 +38,8 @@ import {
   FileText,
   Printer,
   Plus,
-  Receipt
+  Receipt,
+  Share2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -494,56 +495,11 @@ const PaymentsPage = () => {
       <div className="space-y-6">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="shrink-0">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Payments</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Manage all payment activities
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Button variant="outline" size="sm" onClick={handlePreviousMonth} className="shrink-0">
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <div className="text-center min-w-[120px]">
-                <p className="font-medium">{months[selectedMonth]} {selectedYear}</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleNextMonth} className="shrink-0">
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleExport("pdf")}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Export as PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("excel")}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Export as Excel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("csv")}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Export as CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("print")}>
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Payments</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Manage all payment activities
+            </p>
           </div>
         </div>
 
@@ -661,65 +617,79 @@ const PaymentsPage = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap">Payment ID</TableHead>
-                    <TableHead className="whitespace-nowrap">Type</TableHead>
-                    <TableHead className="whitespace-nowrap">Details</TableHead>
-                    <TableHead className="whitespace-nowrap">Amount</TableHead>
-                    <TableHead className="whitespace-nowrap">Date</TableHead>
-                    <TableHead className="whitespace-nowrap">Method</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="whitespace-nowrap">Actions</TableHead>
+                  <TableRow className="border-b-2 border-gray-200 hover:bg-transparent">
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Seat No</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Student</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Amount</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Due Date</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Payment Mode</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredPayments.length > 0 ? (
                     filteredPayments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        <TableCell className="font-medium whitespace-nowrap">{payment.id}</TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          <Badge variant="outline" className="capitalize">
-                            {payment.type}
-                          </Badge>
+                      <TableRow key={payment.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <TableCell className="font-medium whitespace-nowrap text-xs border-r border-gray-100">{payment.id}</TableCell>
+                        <TableCell className="border-r border-gray-100">
+                          <div>
+                            <p className="font-medium text-xs">{payment.studentName}</p>
+                            <p className="text-xs text-muted-foreground">{payment.studentId}</p>
+                          </div>
                         </TableCell>
-                        <TableCell>
-                          {payment.type === "due" || payment.type === "collection" ? (
-                            <div>
-                              <p className="font-medium">{payment.studentName}</p>
-                              <p className="text-xs text-muted-foreground">{payment.studentId}</p>
-                            </div>
-                          ) : (
-                            <p className="font-medium">{payment.description}</p>
-                          )}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">{formatRupee(payment.amount)}</TableCell>
-                        <TableCell className="whitespace-nowrap">
+                        <TableCell className="whitespace-nowrap text-green-600 font-bold text-xs border-r border-gray-100">{formatRupee(payment.amount)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-xs border-r border-gray-100">
                           {payment.date ? format(new Date(payment.date), 'dd/MM/yyyy') : 
                            payment.dueDate ? format(new Date(payment.dueDate), 'dd/MM/yyyy') : '-'}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">{payment.method || '-'}</TableCell>
-                        <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-xs border-r border-gray-100">{payment.method}</TableCell>
                         <TableCell>
-                          {payment.receiptNo && (
+                          <div className="flex items-center gap-2">
                             <Button 
                               variant="outline" 
                               size="sm"
+                              className="text-xs hover:bg-green-50 hover:text-green-600 hover:border-green-200"
                               onClick={() => {
                                 setCurrentReceipt(payment);
                                 setShowReceiptPreview(true);
                               }}
                             >
-                              <Receipt className="h-4 w-4 mr-1" />
+                              <Receipt className="h-3 w-3 mr-1" />
                               Receipt
                             </Button>
-                          )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                              onClick={() => {
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: 'Payment Receipt',
+                                    text: `Payment Receipt for ${payment.studentName}`,
+                                    url: window.location.href,
+                                  });
+                                } else {
+                                  toast({
+                                    title: "Share",
+                                    description: "Sharing is not supported on this device",
+                                  });
+                                }
+                              }}
+                            >
+                              <Share2 className="h-3 w-3 mr-1" />
+                              Share
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        <p className="text-muted-foreground">No payments found matching the current filters</p>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <FileText className="h-8 w-8 text-gray-300" />
+                          <p className="text-muted-foreground text-xs">No payments found matching the current filters</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}

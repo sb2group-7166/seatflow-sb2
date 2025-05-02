@@ -1,11 +1,32 @@
 import express from 'express';
+import { Types } from 'mongoose';
 import Seat from '../models/seat.model';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
+interface CreateSeatBody {
+  number: string;
+  type: string;
+  status: string;
+  price: number;
+}
+
+interface UpdateSeatBody {
+  number?: string;
+  type?: string;
+  status?: string;
+  price?: number;
+}
+
+interface BookSeatBody {
+  studentId: string;
+  startTime: string;
+  endTime: string;
+}
+
 // Get all seats
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const seats = await Seat.find();
     res.json(seats);
@@ -15,7 +36,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get seat by ID
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticate, async (req: express.Request<{ id: string }>, res) => {
   try {
     const seat = await Seat.findById(req.params.id);
     if (!seat) {
@@ -28,7 +49,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Create new seat
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticate, async (req: express.Request<{}, {}, CreateSeatBody>, res) => {
   try {
     const seat = new Seat(req.body);
     await seat.save();
@@ -39,7 +60,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Update seat
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticate, async (req: express.Request<{ id: string }, {}, UpdateSeatBody>, res) => {
   try {
     const seat = await Seat.findByIdAndUpdate(
       req.params.id,
@@ -56,7 +77,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // Book seat
-router.post('/:id/book', authenticateToken, async (req, res) => {
+router.post('/:id/book', authenticate, async (req: express.Request<{ id: string }, {}, BookSeatBody>, res) => {
   try {
     const { studentId, startTime, endTime } = req.body;
     const seat = await Seat.findById(req.params.id);
@@ -70,9 +91,9 @@ router.post('/:id/book', authenticateToken, async (req, res) => {
     }
 
     seat.status = 'occupied';
-    seat.studentId = studentId;
-    seat.bookingStart = startTime;
-    seat.bookingEnd = endTime;
+    seat.studentId = new Types.ObjectId(studentId);
+    seat.bookingStart = new Date(startTime);
+    seat.bookingEnd = new Date(endTime);
 
     await seat.save();
     res.json(seat);
@@ -82,7 +103,7 @@ router.post('/:id/book', authenticateToken, async (req, res) => {
 });
 
 // Release seat
-router.post('/:id/release', authenticateToken, async (req, res) => {
+router.post('/:id/release', authenticate, async (req: express.Request<{ id: string }>, res) => {
   try {
     const seat = await Seat.findById(req.params.id);
 

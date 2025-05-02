@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">seatflow-sb2-admin</string>
-    <string name="title_activity_main">seatflow-sb2-admin</string>
-    <string name="package_name">app.lovable.bbdeaa69246942caa443ecc439620bf6</string>
-    <string name="custom_url_scheme">app.lovable.bbdeaa69246942caa443ecc439620bf6</string>
+    <string name="app_name">SeatFlow Admin</string>
+    <string name="title_activity_main">SeatFlow Admin</string>
+    <string name="package_name">com.seatflow.admin</string>
+    <string name="custom_url_scheme">com.seatflow.admin</string>
 </resources>

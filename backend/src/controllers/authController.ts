@@ -32,7 +32,7 @@ export const register = async (req: Request<{}, {}, RegisterBody>, res: Response
     await user.save();
 
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { id: user._id, role: user.role },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -74,7 +74,7 @@ export const login = async (req: Request<{}, {}, LoginBody>, res: Response) => {
     await user.save();
 
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { id: user._id, role: user.role },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -100,11 +100,11 @@ export const login = async (req: Request<{}, {}, LoginBody>, res: Response) => {
 
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user?.userId) {
+    if (!req.user?._id) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const user = await User.findById(req.user.userId).select('-password');
+    const user = await User.findById(req.user._id).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -121,12 +121,12 @@ export const getProfile = async (req: AuthRequest, res: Response) => {
 
 export const updateProfile = async (req: AuthRequest<{}, {}, UpdateProfileBody>, res: Response) => {
   try {
-    if (!req.user?.userId) {
+    if (!req.user?._id) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     const { name, email, profileImage } = req.body;
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user._id);
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -166,12 +166,12 @@ export const updateProfile = async (req: AuthRequest<{}, {}, UpdateProfileBody>,
 
 export const changePassword = async (req: AuthRequest<{}, {}, ChangePasswordBody>, res: Response) => {
   try {
-    if (!req.user?.userId) {
+    if (!req.user?._id) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

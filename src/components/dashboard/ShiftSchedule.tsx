@@ -1,4 +1,4 @@
-
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,17 +21,32 @@ import {
   Plus, 
   ClockIcon, 
   AlertCircle,
-  RotateCw
+  RotateCw,
+  Save,
+  X,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ShiftScheduleProps {
   className?: string;
 }
 
+interface Shift {
+  id: string;
+  name: string;
+  timeRange: string;
+  capacity: string;
+  currentOccupancy: string;
+  status: string;
+  staffAssigned: number;
+}
+
 // Updated mock data for shifts to align with SeatMap
-const shifts = [
+const initialShifts: Shift[] = [
   {
     id: "shift-1",
     name: "Morning",
@@ -81,25 +96,64 @@ const shifts = [
 
 const ShiftSchedule = ({ className }: ShiftScheduleProps) => {
   const { toast } = useToast();
+  const [shifts, setShifts] = useState<Shift[]>(initialShifts);
+  const [editingShift, setEditingShift] = useState<string | null>(null);
+  const [editedShift, setEditedShift] = useState<Shift | null>(null);
 
   const handleAddNewShift = () => {
-    toast({
-      title: "New Shift",
-      description: "Add new shift form opened.",
-    });
+    const newShift: Shift = {
+      id: `shift-${shifts.length + 1}`,
+      name: "New Shift",
+      timeRange: "00:00 AM - 00:00 PM",
+      capacity: "0 seats",
+      currentOccupancy: "0 seats (0%)",
+      status: "inactive",
+      staffAssigned: 0,
+    };
+    setShifts([...shifts, newShift]);
+    setEditingShift(newShift.id);
+    setEditedShift(newShift);
   };
 
   const handleEditShift = (shiftId: string) => {
-    toast({
-      title: "Edit Shift",
-      description: `Edit shift ${shiftId} form opened.`,
-    });
+    const shift = shifts.find(s => s.id === shiftId);
+    if (shift) {
+      setEditingShift(shiftId);
+      setEditedShift({ ...shift });
+    }
+  };
+
+  const handleSaveShift = () => {
+    if (editingShift && editedShift) {
+      setShifts(shifts.map(shift => 
+        shift.id === editingShift ? editedShift : shift
+      ));
+      setEditingShift(null);
+      setEditedShift(null);
+      toast({
+        title: "Shift Updated",
+        description: "The shift has been successfully updated.",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingShift(null);
+    setEditedShift(null);
   };
 
   const handleReallocateShift = (from: string, to: string) => {
     toast({
       title: "Reallocate Seats",
       description: `Seats reallocated from ${from} to ${to}.`,
+    });
+  };
+
+  const handleDeleteShift = (shiftId: string) => {
+    setShifts(shifts.filter(shift => shift.id !== shiftId));
+    toast({
+      title: "Shift Deleted",
+      description: "The shift has been successfully deleted.",
     });
   };
 
@@ -136,13 +190,41 @@ const ShiftSchedule = ({ className }: ShiftScheduleProps) => {
               {shifts.map((shift) => (
                 <TableRow key={shift.id}>
                   <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <ClockIcon className="h-4 w-4 text-muted-foreground" />
-                      {shift.name}
-                    </div>
+                    {editingShift === shift.id ? (
+                      <Input
+                        value={editedShift?.name}
+                        onChange={(e) => setEditedShift(prev => prev ? { ...prev, name: e.target.value } : null)}
+                        className="h-8"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <ClockIcon className="h-4 w-4 text-muted-foreground" />
+                        {shift.name}
+                      </div>
+                    )}
                   </TableCell>
-                  <TableCell>{shift.timeRange}</TableCell>
-                  <TableCell className="hidden md:table-cell">{shift.capacity}</TableCell>
+                  <TableCell>
+                    {editingShift === shift.id ? (
+                      <Input
+                        value={editedShift?.timeRange}
+                        onChange={(e) => setEditedShift(prev => prev ? { ...prev, timeRange: e.target.value } : null)}
+                        className="h-8"
+                      />
+                    ) : (
+                      shift.timeRange
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {editingShift === shift.id ? (
+                      <Input
+                        value={editedShift?.capacity}
+                        onChange={(e) => setEditedShift(prev => prev ? { ...prev, capacity: e.target.value } : null)}
+                        className="h-8"
+                      />
+                    ) : (
+                      shift.capacity
+                    )}
+                  </TableCell>
                   <TableCell className="hidden md:table-cell">
                     <div className="flex items-center">
                       {shift.currentOccupancy}
@@ -157,22 +239,67 @@ const ShiftSchedule = ({ className }: ShiftScheduleProps) => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={shift.status === "active" ? "default" : "outline"}
-                      className={shift.status === "active" ? "bg-green-500" : ""}
-                    >
-                      {shift.status}
-                    </Badge>
+                    {editingShift === shift.id ? (
+                      <Select
+                        value={editedShift?.status}
+                        onValueChange={(value) => setEditedShift(prev => prev ? { ...prev, status: value } : null)}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge
+                        variant={shift.status === "active" ? "default" : "outline"}
+                        className={shift.status === "active" ? "bg-green-500" : ""}
+                      >
+                        {shift.status}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => handleEditShift(shift.id)}
-                    >
-                      <PencilLine className="h-4 w-4 mr-2" />
-                      Edit
-                    </Button>
+                    {editingShift === shift.id ? (
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={handleSaveShift}
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={handleCancelEdit}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditShift(shift.id)}
+                        >
+                          <PencilLine className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteShift(shift.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -180,7 +307,7 @@ const ShiftSchedule = ({ className }: ShiftScheduleProps) => {
           </Table>
         </div>
         
-        <div className="mt-4 p-4 bg-muted/50 rounded-md">
+        <div className="mt-6">
           <h4 className="font-medium mb-2">Auto Seat Reallocation</h4>
           <div className="flex flex-wrap gap-2 items-start">
             <Button 

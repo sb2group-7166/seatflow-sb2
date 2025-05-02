@@ -2,13 +2,12 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Sofa, IndianRupee, Clock, TrendingUp, ChevronRight, BookOpen, Activity, Filter, BarChart2, LineChart, PieChart, Download, Plus, Bookmark, UserPlus, CreditCard, Search, AlertCircle, Loader2, Phone, Calendar, FileText, User } from 'lucide-react';
+import { Users, Sofa, IndianRupee, Clock, TrendingUp, ChevronRight, BookOpen, Activity, Filter, BarChart2, LineChart, PieChart, Download, Plus, Bookmark, UserPlus, CreditCard, Search, AlertCircle, Loader2, Phone, Calendar, FileText, User, X, Building2, Library, School } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { format, subDays } from 'date-fns';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,6 +19,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import QuickCollection from '@/components/financial/payments/QuickCollection';
+import { properties } from "@/data/properties";
 
 // API Integration Types
 interface Booking {
@@ -44,6 +45,82 @@ interface Revenue {
   date: string;
   type: 'booking' | 'membership' | 'other';
 }
+
+// Mock data for different properties
+const propertyData = {
+  sb2: {
+    totalSeats: 98,
+    bookedSeats: 45,
+    activeStudents: 120,
+    todayRevenue: 2500,
+    monthlyRevenue: 75000,
+    averageOccupancy: '65%',
+    peakHours: '2:00 PM - 4:00 PM',
+    popularZones: ['Reading Area', 'Computer Zone'],
+    studentGrowth: '+12%',
+    revenueGrowth: '+8%',
+    todayBookings: 15,
+    todayNewStudents: 3,
+    todayActiveStudents: 85,
+    todayCancellations: 2,
+    todayRefunds: 1,
+    todayPayments: 18,
+    todayAverageStay: '2.5 hours',
+    todayPopularSeats: ['A1', 'B3', 'C5'],
+    todayBusiestHour: '3:00 PM',
+    todayQuietestHour: '11:00 AM'
+  },
+  sb1: {
+    totalSeats: 75,
+    bookedSeats: 35,
+    activeStudents: 90,
+    todayRevenue: 1800,
+    monthlyRevenue: 55000,
+    averageOccupancy: '47%',
+    peakHours: '1:00 PM - 3:00 PM',
+    popularZones: ['Study Area', 'Group Zone'],
+    studentGrowth: '+8%',
+    revenueGrowth: '+5%',
+    todayBookings: 12,
+    todayNewStudents: 2,
+    todayActiveStudents: 65,
+    todayCancellations: 1,
+    todayRefunds: 0,
+    todayPayments: 14,
+    todayAverageStay: '2.0 hours',
+    todayPopularSeats: ['B2', 'C4', 'D1'],
+    todayBusiestHour: '2:00 PM',
+    todayQuietestHour: '10:00 AM'
+  },
+  main: {
+    totalSeats: 120,
+    bookedSeats: 60,
+    activeStudents: 150,
+    todayRevenue: 3200,
+    monthlyRevenue: 95000,
+    averageOccupancy: '50%',
+    peakHours: '3:00 PM - 5:00 PM',
+    popularZones: ['Main Hall', 'Quiet Zone'],
+    studentGrowth: '+15%',
+    revenueGrowth: '+10%',
+    todayBookings: 20,
+    todayNewStudents: 5,
+    todayActiveStudents: 100,
+    todayCancellations: 3,
+    todayRefunds: 2,
+    todayPayments: 22,
+    todayAverageStay: '3.0 hours',
+    todayPopularSeats: ['M1', 'M2', 'M3'],
+    todayBusiestHour: '4:00 PM',
+    todayQuietestHour: '9:00 AM'
+  }
+};
+
+const propertyNames = {
+  sb2: "SB2 Library",
+  sb1: "SB1 Library",
+  main: "Main Library"
+};
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -85,95 +162,27 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Data Validation Types
-interface ChartData {
-  date: string;
-  occupancy: number;
-  revenue: number;
-  students: number;
-}
-
-interface ZoneData {
-  name: string;
-  value: number;
-}
-
-// Data Validation Functions
-const validateChartData = (data: ChartData[]): boolean => {
-  return data.every(item => 
-    typeof item.date === 'string' &&
-    typeof item.occupancy === 'number' && item.occupancy >= 0 && item.occupancy <= 100 &&
-    typeof item.revenue === 'number' && item.revenue >= 0 &&
-    typeof item.students === 'number' && item.students >= 0
-  );
-};
-
-const validateZoneData = (data: ZoneData[]): boolean => {
-  return data.every(item => 
-    typeof item.name === 'string' &&
-    typeof item.value === 'number' && item.value >= 0
-  );
-};
-
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const [selectedProperty, setSelectedProperty] = useState("sb2");
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [showStudentForm, setShowStudentForm] = useState(false);
-  const [dateRange, setDateRange] = useState('7days');
-  const [selectedZone, setSelectedZone] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState(propertyData.sb2);
 
-  // State for API data
-  const [stats, setStats] = useState({
-    totalSeats: 98,
-    bookedSeats: 45,
-    activeStudents: 120,
-    todayRevenue: 2500,
-    monthlyRevenue: 75000,
-    averageOccupancy: '65%',
-    peakHours: '2:00 PM - 4:00 PM',
-    popularZones: ['Reading Area', 'Computer Zone'],
-    studentGrowth: '+12%',
-    revenueGrowth: '+8%'
-  });
-
-  const [occupancyData, setOccupancyData] = useState<ChartData[]>([]);
-  const [zoneData, setZoneData] = useState<ZoneData[]>([]);
-
-  const [studentData, setStudentData] = useState({
-    fullName: '',
-    fatherName: '',
-    studentId: generateStudentId(),
-    shift: '',
-    email: '',
-    phoneNumber: '',
-    admissionDate: new Date(),
-    address: '',
-    idProofFront: null as File | null,
-    idProofBack: null as File | null,
-    profilePhoto: null as File | null,
-    guardianType: 'father',
-    guardianName: ''
-  });
-
-  // Function to generate student ID
-  function generateStudentId() {
-    const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    return `ST${year}${month}${random}`;
-  }
+  const handlePropertyChange = (propertyId: string) => {
+    setSelectedProperty(propertyId);
+    setStats(propertyData[propertyId as keyof typeof propertyData]);
+  };
 
   // Background data fetching
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
-      if (isLoading) return; // Prevent multiple simultaneous fetches
+      if (isLoading) return;
       
       try {
         setIsLoading(true);
@@ -182,32 +191,9 @@ const DashboardPage = () => {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Mock API response with validation
-        const newStats = {
-          ...stats,
-          bookedSeats: Math.floor(Math.random() * 30) + 40,
-          activeStudents: Math.floor(Math.random() * 20) + 100,
-          todayRevenue: Math.floor(Math.random() * 2000) + 1000
-        };
-
-        const newOccupancyData = Array.from({ length: 7 }, (_, i) => ({
-          date: format(subDays(new Date(), 6 - i), 'MMM dd'),
-          occupancy: Math.floor(Math.random() * 30) + 40,
-          revenue: Math.floor(Math.random() * 2000) + 1000,
-          students: Math.floor(Math.random() * 20) + 80
-        }));
-
-        const newZoneData = [
-          { name: 'Reading Area', value: Math.floor(Math.random() * 20) + 20 },
-          { name: 'Computer Zone', value: Math.floor(Math.random() * 20) + 20 },
-          { name: 'Quiet Study', value: Math.floor(Math.random() * 20) + 20 },
-          { name: 'Group Study', value: Math.floor(Math.random() * 20) + 20 }
-        ];
-
+        // Update stats based on selected property
         if (isMounted) {
-          setStats(newStats);
-          setOccupancyData(newOccupancyData);
-          setZoneData(newZoneData);
+          setStats(propertyData[selectedProperty as keyof typeof propertyData]);
         }
       } catch (error) {
         if (isMounted) {
@@ -232,9 +218,7 @@ const DashboardPage = () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, []); // Empty dependency array means this effect runs once on mount
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  }, [selectedProperty]);
 
   const cardData = [
     {
@@ -251,23 +235,6 @@ const DashboardPage = () => {
           { label: 'Booked Seats', value: stats.bookedSeats },
           { label: 'Available Seats', value: stats.totalSeats - stats.bookedSeats },
           { label: 'Occupancy Rate', value: stats.averageOccupancy }
-        ]
-      }
-    },
-    {
-      id: 'shifts',
-      title: 'Shift Management',
-      value: '2 Active',
-      icon: Clock,
-      color: 'from-purple-500 to-purple-600',
-      route: '/shifts',
-      details: {
-        title: 'Shift Analytics',
-        content: [
-          { label: 'Morning Shift', value: '07:00 AM - 02:00 PM' },
-          { label: 'Evening Shift', value: '02:00 PM - 10:00 PM' },
-          { label: 'Total Shifts', value: '2' },
-          { label: 'Active Now', value: 'Evening Shift' }
         ]
       }
     },
@@ -311,10 +278,6 @@ const DashboardPage = () => {
     navigate(route);
   };
 
-  const handleCardDoubleClick = (route: string) => {
-    navigate(route);
-  };
-
   const handleQuickBooking = () => {
     setShowBookingForm(true);
   };
@@ -324,54 +287,7 @@ const DashboardPage = () => {
   };
 
   const handleAddStudent = () => {
-    setShowStudentForm(true);
-    // Generate new student ID when opening the form
-    setStudentData(prev => ({
-      ...prev,
-      studentId: generateStudentId()
-    }));
-  };
-
-  const handleStudentFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Here you would typically make an API call to save the student data
-      // For now, we'll just show a success message
-      toast.success('Student added successfully!');
-      setShowStudentForm(false);
-      setStudentData({
-        fullName: '',
-        fatherName: '',
-        studentId: generateStudentId(), // Generate new ID for next form
-        shift: '',
-        email: '',
-        phoneNumber: '',
-        admissionDate: new Date(),
-        address: '',
-        idProofFront: null,
-        idProofBack: null,
-        profilePhoto: null,
-        guardianType: 'father',
-        guardianName: ''
-      });
-    } catch (error) {
-      toast.error('Failed to add student. Please try again.');
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'idProofFront' | 'idProofBack' | 'profilePhoto') => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (field === 'profilePhoto' && !file.type.startsWith('image/')) {
-        toast.error('Please upload an image file for profile photo');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        toast.error('File size should be less than 5MB');
-        return;
-      }
-      setStudentData(prev => ({ ...prev, [field]: file }));
-    }
+    navigate('/students/add');
   };
 
   const handleProcessPayment = () => {
@@ -400,52 +316,10 @@ const DashboardPage = () => {
     </Alert>
   );
 
-  // Replace the zone distribution chart with shift data
-  const renderShiftCard = () => (
-    <Card className="col-span-1 md:col-span-2">
-      <CardHeader>
-        <CardTitle>Current Shifts</CardTitle>
-        <CardDescription>Active shifts and their status</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center p-3 bg-muted/50 rounded-md">
-            <Clock className="h-5 w-5 mr-2 text-primary" />
-            <div>
-              <h4 className="font-medium">Morning Shift</h4>
-              <p className="text-sm text-muted-foreground">07:00 AM - 02:00 PM</p>
-            </div>
-            <div className="ml-auto">
-              <span className="text-sm text-green-500">Completed</span>
-            </div>
-          </div>
-          
-          <div className="flex items-center p-3 bg-muted/50 rounded-md">
-            <Clock className="h-5 w-5 mr-2 text-primary" />
-            <div>
-              <h4 className="font-medium">Evening Shift</h4>
-              <p className="text-sm text-muted-foreground">02:00 PM - 10:00 PM</p>
-            </div>
-            <div className="ml-auto">
-              <span className="text-sm text-blue-500">Active</span>
-            </div>
-          </div>
-        </div>
-        <Button 
-          variant="outline" 
-          className="w-full mt-4"
-          onClick={() => navigate('/shifts')}
-        >
-          View All Shifts
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <DashboardLayout>
       <ErrorBoundary>
-      <div className="space-y-6">
+        <div className="space-y-6">
           {error && <ErrorDisplay message={error} />}
 
           {/* Top Bar - Search and Quick Actions */}
@@ -459,32 +333,31 @@ const DashboardPage = () => {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filters
-              </Button>
-            </div>
           </div>
 
           {/* Quick Actions - Priority Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              className="h-full"
             >
-              <Card className="cursor-pointer bg-blue-50 hover:bg-blue-100 transition-colors border-2 border-blue-200" onClick={handleQuickBooking}>
-                <CardContent className="p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+              <Card className="h-full cursor-pointer border-none shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 hover:from-blue-100 hover:to-blue-200/50 transition-all duration-300"
+                onClick={handleQuickBooking}>
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center shadow-inner">
                       <Bookmark className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">Quick Booking</h3>
-                      <p className="text-sm text-muted-foreground">Book a seat instantly</p>
+                      <h3 className="font-semibold text-lg text-blue-900">Quick Booking</h3>
+                      <p className="text-sm text-blue-600">Book a seat instantly</p>
                     </div>
                   </div>
-                  <Plus className="h-6 w-6 text-blue-600" />
+                  <div className="mt-auto flex items-center justify-between">
+                    <span className="text-sm text-blue-600">Click to proceed</span>
+                    <Plus className="h-6 w-6 text-blue-600" />
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -492,19 +365,24 @@ const DashboardPage = () => {
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              className="h-full"
             >
-              <Card className="cursor-pointer bg-green-50 hover:bg-green-100 transition-colors border-2 border-green-200" onClick={handleAddStudent}>
-                <CardContent className="p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+              <Card className="h-full cursor-pointer border-none shadow-lg bg-gradient-to-br from-green-50 to-green-100/50 hover:from-green-100 hover:to-green-200/50 transition-all duration-300"
+                onClick={handleAddStudent}>
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-xl bg-green-100 flex items-center justify-center shadow-inner">
                       <UserPlus className="h-6 w-6 text-green-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">Add Student</h3>
-                      <p className="text-sm text-muted-foreground">Register new student</p>
+                      <h3 className="font-semibold text-lg text-green-900">Add Student</h3>
+                      <p className="text-sm text-green-600">Register new student</p>
                     </div>
                   </div>
-                  <Plus className="h-6 w-6 text-green-600" />
+                  <div className="mt-auto flex items-center justify-between">
+                    <span className="text-sm text-green-600">Click to proceed</span>
+                    <Plus className="h-6 w-6 text-green-600" />
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -512,100 +390,254 @@ const DashboardPage = () => {
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              className="h-full"
             >
-              <Card className="cursor-pointer bg-purple-50 hover:bg-purple-100 transition-colors border-2 border-purple-200" onClick={handleProcessPayment}>
-                <CardContent className="p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+              <Card className="h-full cursor-pointer border-none shadow-lg bg-gradient-to-br from-purple-50 to-purple-100/50 hover:from-purple-100 hover:to-purple-200/50 transition-all duration-300"
+                onClick={handleProcessPayment}>
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-xl bg-purple-100 flex items-center justify-center shadow-inner">
                       <CreditCard className="h-6 w-6 text-purple-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">Process Payment</h3>
-                      <p className="text-sm text-muted-foreground">Handle payments</p>
+                      <h3 className="font-semibold text-lg text-purple-900">Quick Collection</h3>
+                      <p className="text-sm text-purple-600">Collect payment & generate receipt</p>
                     </div>
                   </div>
-                  <Plus className="h-6 w-6 text-purple-600" />
+                  <div className="mt-auto flex items-center justify-between">
+                    <span className="text-sm text-purple-600">Click to proceed</span>
+                    <Plus className="h-6 w-6 text-purple-600" />
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
 
           {/* Key Metrics - Priority Section */}
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
             {cardData.map((card) => (
               <motion.div
                 key={card.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                className="h-full"
               >
                 <Card 
-                  className={`bg-gradient-to-br ${card.color} text-white cursor-pointer`}
+                  className={`h-full border-none shadow-lg bg-gradient-to-br ${card.color} text-white cursor-pointer hover:shadow-xl transition-all duration-300`}
                   onClick={() => handleCardClick(card.route)}
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
+                    <CardTitle className="text-lg font-semibold">
                       {card.title}
                     </CardTitle>
-                    <card.icon className="h-4 w-4" />
+                    <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center shadow-inner">
+                      <card.icon className="h-5 w-5" />
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{card.value}</div>
-                    <p className="text-xs text-white/80">
-                      Click to view
-                    </p>
+                    <div className="text-3xl font-bold mb-2">{card.value}</div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-white/80">
+                        Click to view details
+                      </p>
+                      <ChevronRight className="h-5 w-5 text-white/80" />
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
             ))}
           </div>
 
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
-            <Card className="col-span-1">
-              <CardHeader>
-                <CardTitle>Occupancy Trend</CardTitle>
-                <CardDescription>Last 7 days occupancy rate</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={occupancyData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Area type="monotone" dataKey="occupancy" stroke="#8884d8" fill="#8884d8" />
-                    </AreaChart>
-                  </ResponsiveContainer>
+          {/* Today's Overview Card */}
+          <Card className="col-span-2 border-none shadow-lg">
+            <CardHeader className="border-b pb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                    Today's Overview
+                  </CardTitle>
+                  <CardDescription className="mt-1">Comprehensive overview of today's activities</CardDescription>
                 </div>
-              </CardContent>
-            </Card>
-
-            {renderShiftCard()}
-          </div>
-
-          {/* Main Chart - Full Width */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Occupancy & Revenue Trends</CardTitle>
-              <CardDescription>Last 7 days occupancy and revenue data</CardDescription>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Last updated:</span>
+                  <span className="text-sm font-medium">{format(new Date(), 'hh:mm a')}</span>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                {isLoading ? (
-                  <LoadingSpinner />
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={occupancyData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis yAxisId="left" />
-                      <YAxis yAxisId="right" orientation="right" />
-                      <Tooltip />
-                      <Area yAxisId="left" type="monotone" dataKey="occupancy" stroke="#3b82f6" fill="#93c5fd" name="Occupancy %" />
-                      <Area yAxisId="right" type="monotone" dataKey="revenue" stroke="#8b5cf6" fill="#c4b5fd" name="Revenue (₹)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                )}
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {/* Occupancy Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Sofa className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold">Occupancy</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-blue-600">Current Occupancy</span>
+                        <span className="text-2xl font-bold text-blue-700">{stats.averageOccupancy}</span>
+                      </div>
+                      <div className="h-2 bg-blue-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                          style={{ width: stats.averageOccupancy }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock className="h-4 w-4 text-green-500" />
+                          <span className="text-xs font-medium">Peak Hours</span>
+                        </div>
+                        <span className="text-sm">{stats.peakHours}</span>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Bookmark className="h-4 w-4 text-purple-500" />
+                          <span className="text-xs font-medium">Today's Bookings</span>
+                        </div>
+                        <span className="text-sm font-medium">{stats.todayBookings}</span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="h-4 w-4 text-orange-500" />
+                        <span className="text-xs font-medium">Avg. Stay Time</span>
+                      </div>
+                      <span className="text-sm">{stats.todayAverageStay}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Student Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Users className="h-5 w-5 text-green-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold">Students</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-green-600">Active Students</span>
+                        <span className="text-2xl font-bold text-green-700">{stats.todayActiveStudents}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-green-600">+{stats.todayNewStudents} new today</span>
+                        <span className="text-xs text-red-600">-{stats.todayCancellations} cancellations</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <UserPlus className="h-4 w-4 text-blue-500" />
+                          <span className="text-xs font-medium">New Students</span>
+                        </div>
+                        <span className="text-sm font-medium">{stats.todayNewStudents}</span>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <X className="h-4 w-4 text-red-500" />
+                          <span className="text-xs font-medium">Cancellations</span>
+                        </div>
+                        <span className="text-sm font-medium">{stats.todayCancellations}</span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <IndianRupee className="h-4 w-4 text-yellow-500" />
+                        <span className="text-xs font-medium">Refunds</span>
+                      </div>
+                      <span className="text-sm font-medium">{stats.todayRefunds}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <IndianRupee className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <h3 className="text-sm font-semibold">Financial</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-purple-600">Today's Revenue</span>
+                        <span className="text-2xl font-bold text-purple-700">₹{stats.todayRevenue}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-purple-600">{stats.todayPayments} payments</span>
+                        <span className="text-xs text-green-500">{stats.revenueGrowth} growth</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CreditCard className="h-4 w-4 text-green-500" />
+                          <span className="text-xs font-medium">Total Payments</span>
+                        </div>
+                        <span className="text-sm font-medium">{stats.todayPayments}</span>
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-1">
+                          <TrendingUp className="h-4 w-4 text-orange-500" />
+                          <span className="text-xs font-medium">Monthly Revenue</span>
+                        </div>
+                        <span className="text-sm">₹{stats.monthlyRevenue}</span>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Activity className="h-4 w-4 text-blue-500" />
+                        <span className="text-xs font-medium">Revenue Growth</span>
+                      </div>
+                      <span className="text-sm text-green-500">{stats.revenueGrowth}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl">
+                  <h4 className="text-sm font-medium mb-3">Popular Seats Today</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {stats.todayPopularSeats.map((seat, index) => (
+                      <span 
+                        key={index} 
+                        className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium hover:bg-primary/20 transition-colors cursor-pointer"
+                      >
+                        {seat}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl">
+                  <h4 className="text-sm font-medium mb-3">Peak Hours</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-white/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="h-4 w-4 text-green-500" />
+                        <span className="text-xs font-medium">Busiest Hour</span>
+                      </div>
+                      <span className="text-sm font-medium">{stats.todayBusiestHour}</span>
+                    </div>
+                    <div className="p-3 bg-white/50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="h-4 w-4 text-blue-500" />
+                        <span className="text-xs font-medium">Quietest Hour</span>
+                      </div>
+                      <span className="text-sm font-medium">{stats.todayQuietestHour}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -620,227 +652,7 @@ const DashboardPage = () => {
           {/* Payment Form Dialog */}
           <Dialog open={showPaymentForm} onOpenChange={setShowPaymentForm}>
             <DialogContent className="max-w-2xl">
-              <PaymentForm onClose={() => setShowPaymentForm(false)} />
-            </DialogContent>
-          </Dialog>
-
-          {/* Student Form Dialog */}
-          <Dialog open={showStudentForm} onOpenChange={setShowStudentForm}>
-            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                  Add New Student
-                </DialogTitle>
-                <p className="text-sm text-muted-foreground">Fill in the student details below</p>
-              </DialogHeader>
-              <form onSubmit={handleStudentFormSubmit} className="space-y-8">
-                {/* Personal Information Section */}
-                <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Personal Information</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName" className="text-sm font-medium">Full Name <span className="text-red-500">*</span></Label>
-                      <Input
-                        id="fullName"
-                        placeholder="Enter student's full name"
-                        value={studentData.fullName}
-                        onChange={(e) => setStudentData(prev => ({ ...prev, fullName: e.target.value }))}
-                        required
-                        className="focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="guardianName" className="text-sm font-medium">Father's/Husband's Name <span className="text-red-500">*</span></Label>
-                      <Input
-                        id="guardianName"
-                        placeholder="Enter father's/husband's name"
-                        value={studentData.guardianName}
-                        onChange={(e) => setStudentData(prev => ({ ...prev, guardianName: e.target.value }))}
-                        required
-                        className="focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Academic Information Section */}
-                <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Academic Information</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="studentId" className="text-sm font-medium">Student ID <span className="text-red-500">*</span></Label>
-                      <Input
-                        id="studentId"
-                        placeholder="Enter student ID"
-                        value={studentData.studentId}
-                        onChange={(e) => setStudentData(prev => ({ ...prev, studentId: e.target.value }))}
-                        required
-                        className="focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="shift" className="text-sm font-medium">Shift <span className="text-red-500">*</span></Label>
-                      <Select
-                        value={studentData.shift}
-                        onValueChange={(value) => setStudentData(prev => ({ ...prev, shift: value }))}
-                      >
-                        <SelectTrigger className="focus:ring-2 focus:ring-primary/20">
-                          <SelectValue placeholder="Select shift" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="morning">Morning (07:00 AM - 02:00 PM)</SelectItem>
-                          <SelectItem value="evening">Evening (02:00 PM - 10:00 PM)</SelectItem>
-                          <SelectItem value="lateEvening">Late Evening (02:00 PM - 12:00 AM)</SelectItem>
-                          <SelectItem value="fullDay1">Full Day (07:00 AM - 10:00 PM)</SelectItem>
-                          <SelectItem value="fullDay2">Full Day (07:00 AM - 12:00 AM)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information Section */}
-                <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Contact Information</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium">Email Address <span className="text-red-500">*</span></Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter email address"
-                        value={studentData.email}
-                        onChange={(e) => setStudentData(prev => ({ ...prev, email: e.target.value }))}
-                        required
-                        className="focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phoneNumber" className="text-sm font-medium">Phone Number <span className="text-red-500">*</span></Label>
-                      <Input
-                        id="phoneNumber"
-                        type="tel"
-                        placeholder="Enter phone number"
-                        value={studentData.phoneNumber}
-                        onChange={(e) => setStudentData(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                        required
-                        className="focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="address" className="text-sm font-medium">Address <span className="text-red-500">*</span></Label>
-                      <Textarea
-                        id="address"
-                        placeholder="Enter complete address"
-                        value={studentData.address}
-                        onChange={(e) => setStudentData(prev => ({ ...prev, address: e.target.value }))}
-                        required
-                        className="min-h-[100px] focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Admission Details Section */}
-                <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Admission Details</h3>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Admission Date <span className="text-red-500">*</span></Label>
-                    <Input
-                      type="date"
-                      value={studentData.admissionDate ? format(studentData.admissionDate, 'yyyy-MM-dd') : ''}
-                      onChange={(e) => {
-                        const date = e.target.value ? new Date(e.target.value) : new Date();
-                        setStudentData(prev => ({ ...prev, admissionDate: date }));
-                      }}
-                      required
-                      className="focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                </div>
-
-                {/* Documents Section */}
-                <div className="space-y-6 bg-white rounded-lg p-6 border shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">Required Documents</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="idProofFront" className="text-sm font-medium">ID Proof (Front Side) <span className="text-red-500">*</span></Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="idProofFront"
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleFileUpload(e, 'idProofFront')}
-                          required
-                          className="focus:ring-2 focus:ring-primary/20"
-                        />
-                        {studentData.idProofFront && (
-                          <span className="text-sm text-green-600">✓ Uploaded</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Accepted formats: PDF, JPG, PNG (Max 5MB)</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="idProofBack" className="text-sm font-medium">ID Proof (Back Side) <span className="text-red-500">*</span></Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="idProofBack"
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          onChange={(e) => handleFileUpload(e, 'idProofBack')}
-                          required
-                          className="focus:ring-2 focus:ring-primary/20"
-                        />
-                        {studentData.idProofBack && (
-                          <span className="text-sm text-green-600">✓ Uploaded</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Accepted formats: PDF, JPG, PNG (Max 5MB)</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="profilePhoto" className="text-sm font-medium">Profile Photo <span className="text-red-500">*</span></Label>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          id="profilePhoto"
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(e, 'profilePhoto')}
-                          required
-                          className="focus:ring-2 focus:ring-primary/20"
-                        />
-                        {studentData.profilePhoto && (
-                          <span className="text-sm text-green-600">✓ Uploaded</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">Accepted formats: JPG, PNG (Max 5MB)</p>
-                    </div>
-                  </div>
-                </div>
-
-                <DialogFooter className="gap-2">
-                  <Button type="button" variant="outline" onClick={() => setShowStudentForm(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="bg-primary hover:bg-primary/90">
-                    Add Student
-                  </Button>
-                </DialogFooter>
-              </form>
+              <QuickCollection onClose={() => setShowPaymentForm(false)} />
             </DialogContent>
           </Dialog>
 
@@ -863,29 +675,20 @@ const DashboardPage = () => {
                     <LoadingSpinner />
                   ) : (
                     <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-4">
-                          {selectedCard && cardData.find(card => card.id === selectedCard)?.details.content.map((item, index) => (
-                            <div key={index} className="grid grid-cols-4 items-center gap-4">
-                              <div className="col-span-1 text-sm font-medium">{item.label}</div>
-                              <div className="col-span-3 text-sm">{item.value}</div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="h-[300px]">
-                          {selectedCard && cardData.find(card => card.id === selectedCard)?.details.chart}
-                        </div>
+                      <div className="space-y-4">
+                        {selectedCard && cardData.find(card => card.id === selectedCard)?.details.content.map((item, index) => (
+                          <div key={index} className="grid grid-cols-4 items-center gap-4">
+                            <div className="col-span-1 text-sm font-medium">{item.label}</div>
+                            <div className="col-span-3 text-sm">{item.value}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
                 </TabsContent>
                 <TabsContent value="analytics">
-                  <div className="h-[300px]">
-                    {isLoading ? (
-                      <LoadingSpinner />
-                    ) : (
-                      selectedCard && cardData.find(card => card.id === selectedCard)?.details.chart
-                    )}
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">Analytics data will be available soon.</p>
                   </div>
                 </TabsContent>
                 <TabsContent value="actions">
@@ -902,7 +705,7 @@ const DashboardPage = () => {
                       <Activity className="mr-2 h-4 w-4" />
                       Schedule Analysis
                     </Button>
-              </div>
+                  </div>
                 </TabsContent>
               </Tabs>
               <DialogFooter>
@@ -921,4 +724,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage;
+export default DashboardPage; 

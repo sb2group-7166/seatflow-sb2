@@ -1,12 +1,13 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import { authenticate } from '../middleware/auth';
 import {
   createStudent,
+  deleteStudent,
   getStudents,
   getStudentById,
   updateStudent,
-  deleteStudent
 } from '../controllers/student.controller';
 
 const router = express.Router();
@@ -19,36 +20,28 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
   },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG, and PDF files are allowed.'));
-    }
-  }
 });
 
-// Routes
-router.post('/', upload.fields([
-  { name: 'profilePhoto', maxCount: 1 },
-  { name: 'idProof', maxCount: 1 }
-]), createStudent);
+const upload = multer({ storage: storage });
 
-router.get('/', getStudents);
-router.get('/:id', getStudentById);
-router.put('/:id', upload.fields([
-  { name: 'profilePhoto', maxCount: 1 },
-  { name: 'idProof', maxCount: 1 }
-]), updateStudent);
-router.delete('/:id', deleteStudent);
+// Get all students
+router.get('/', authenticate, getStudents);
+
+// Get student by ID
+router.get('/:id', authenticate, getStudentById);
+
+// Create new student
+router.post('/', authenticate, upload.array('files'), (req, res) => {
+  createStudent(req as any, res);
+});
+
+// Update student
+router.put('/:id', authenticate, upload.array('files'), (req, res) => {
+  updateStudent(req as any, res);
+});
+
+// Delete student
+router.delete('/:id', authenticate, deleteStudent);
 
 export default router; 

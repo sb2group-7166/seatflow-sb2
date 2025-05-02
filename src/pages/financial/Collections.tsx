@@ -559,59 +559,65 @@ const CollectionsPage = () => {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg ${selectedCard === "total" ? "ring-2 ring-green-400" : ""}`}
+            className={`border-amber-200 cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === "total" ? "ring-2 ring-amber-500" : ""
+            }`}
             onClick={() => handleCardClick("total")}
           >
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg sm:text-xl font-medium">Total Collection</CardTitle>
+              <CardTitle className="text-sm font-bold">Total Collection</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl sm:text-3xl font-bold flex items-center text-green-400">
+                <div className="text-xl sm:text-2xl font-bold flex items-center text-green-600">
                   <IndianRupee className="h-5 w-5 mr-1" />
                   9000
                 </div>
-                <AlertCircle className="h-6 w-6 text-muted-foreground" />
+                <AlertCircle className="h-6 w-6 text-amber-500" />
               </div>
-              <p className="text-base sm:text-lg text-muted-foreground mt-2">Overall collections</p>
+              <p className="text-xs text-muted-foreground mt-2">Overall collections</p>
             </CardContent>
           </Card>
 
           <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg ${selectedCard === "today" ? "ring-2 ring-green-400" : ""}`}
+            className={`border-blue-200 cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === "today" ? "ring-2 ring-blue-500" : ""
+            }`}
             onClick={() => handleCardClick("today")}
           >
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg sm:text-xl font-medium">Today's Collection</CardTitle>
+              <CardTitle className="text-sm font-bold">Today's Collection</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl sm:text-3xl font-bold flex items-center text-green-400">
+                <div className="text-2xl font-bold flex items-center text-green-600">
                   <IndianRupee className="h-5 w-5 mr-1" />
                   2500
                 </div>
-                <CheckCircle2 className="h-6 w-6 text-muted-foreground" />
+                <CheckCircle2 className="h-6 w-6 text-blue-500" />
               </div>
-              <p className="text-base sm:text-lg text-muted-foreground mt-2">Collections for today</p>
+              <p className="text-xs text-muted-foreground mt-2">Collections for today</p>
             </CardContent>
           </Card>
 
           <Card 
-            className={`cursor-pointer transition-all hover:shadow-lg ${selectedCard === "april" ? "ring-2 ring-green-400" : ""}`}
+            className={`border-green-200 cursor-pointer transition-all hover:shadow-md ${
+              selectedCard === "april" ? "ring-2 ring-green-500" : ""
+            }`}
             onClick={() => handleCardClick("april")}
           >
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg sm:text-xl font-medium">April Collection</CardTitle>
+              <CardTitle className="text-sm font-bold">April Collection</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl sm:text-3xl font-bold flex items-center text-green-400">
+                <div className="text-2xl font-bold flex items-center text-green-600">
                   <IndianRupee className="h-5 w-5 mr-1" />
                   6500
                 </div>
-                <AlertCircle className="h-6 w-6 text-muted-foreground" />
+                <AlertCircle className="h-6 w-6 text-green-500" />
               </div>
-              <p className="text-base sm:text-lg text-muted-foreground mt-2">Collections for April</p>
+              <p className="text-xs text-muted-foreground mt-2">Collections for April</p>
             </CardContent>
           </Card>
         </div>
@@ -744,35 +750,37 @@ const CollectionsPage = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b-2">
-                    <TableHead className="whitespace-nowrap text-xs border-r">Seat No</TableHead>
-                    <TableHead className="whitespace-nowrap text-xs border-r">Student</TableHead>
-                    <TableHead className="whitespace-nowrap text-xs border-r">Amount</TableHead>
-                    <TableHead className="whitespace-nowrap text-xs border-r">Received On</TableHead>
-                    <TableHead className="whitespace-nowrap text-xs border-r">Payment Mode</TableHead>
-                    <TableHead className="whitespace-nowrap text-xs">Actions</TableHead>
+                  <TableRow className="border-b-2 border-gray-200 hover:bg-transparent">
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Seat No</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Student</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Amount</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Received On</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Payment Mode</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredCollections.length > 0 ? (
                     filteredCollections.map((collection) => (
-                      <TableRow key={collection.id} className="border-b">
-                        <TableCell className="font-medium whitespace-nowrap text-xs border-r">{collection.id}</TableCell>
-                        <TableCell className="border-r">
+                      <TableRow key={collection.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <TableCell className="font-medium whitespace-nowrap text-xs border-r border-gray-100">{collection.id}</TableCell>
+                        <TableCell className="border-r border-gray-100">
                           <div>
                             <p className="font-medium text-xs">{collection.studentName}</p>
                             <p className="text-xs text-muted-foreground">{collection.studentId}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="whitespace-nowrap text-green-400 font-bold text-xs border-r">{formatRupee(collection.amount)}</TableCell>
-                        <TableCell className="whitespace-nowrap text-xs border-r">{format(new Date(collection.date), 'dd/MM/yyyy')}</TableCell>
-                        <TableCell className="whitespace-nowrap text-xs border-r">{collection.method}</TableCell>
+                        <TableCell className="whitespace-nowrap text-green-600 font-bold text-xs border-r border-gray-100">{formatRupee(collection.amount)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-xs border-r border-gray-100">
+                          {collection.date ? format(new Date(collection.date), 'dd/MM/yyyy') : '-'}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-xs border-r border-gray-100">{collection.method}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button 
                               variant="outline" 
                               size="sm"
-                              className="text-xs"
+                              className="text-xs hover:bg-green-50 hover:text-green-600 hover:border-green-200"
                               onClick={() => {
                                 setCurrentReceipt(collection);
                                 setShowReceiptPreview(true);
@@ -784,9 +792,8 @@ const CollectionsPage = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-xs"
+                              className="text-xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
                               onClick={() => {
-                                // Share functionality
                                 if (navigator.share) {
                                   navigator.share({
                                     title: 'Collection Receipt',
@@ -811,7 +818,10 @@ const CollectionsPage = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8">
-                        <p className="text-muted-foreground text-xs">No collections found matching the current filters</p>
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <FileText className="h-8 w-8 text-gray-300" />
+                          <p className="text-muted-foreground text-xs">No collections found matching the current filters</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}

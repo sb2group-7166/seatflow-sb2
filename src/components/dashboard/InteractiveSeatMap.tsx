@@ -15,6 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import StudentInfoDialog from './StudentInfoDialog';
+import PreBookedSeatDialog from './PreBookedSeatDialog';
 import { Student } from "@/types";
 
 type SeatStatus = 'available' | 'occupied' | 'pre-booked';
@@ -172,7 +173,7 @@ const InteractiveSeatMap = ({
 
       // Assign student to occupied seats
       let student: Student | undefined;
-      if (status === 'occupied') {
+      if (status === 'occupied' || status === 'pre-booked') {
         const randomStudent = mockStudents[Math.floor(Math.random() * mockStudents.length)];
         student = randomStudent;
       }
@@ -207,6 +208,25 @@ const InteractiveSeatMap = ({
 
     return () => clearInterval(interval);
   }, [selectedShift.id]);
+
+  useEffect(() => {
+    const handleSeatStatusUpdate = (event: CustomEvent) => {
+      const { seatId, status, student } = event.detail;
+      setSeats(prevSeats => 
+        prevSeats.map(seat => 
+          seat.id === seatId 
+            ? { ...seat, status, student } 
+            : seat
+        )
+      );
+    };
+
+    window.addEventListener('seatStatusUpdate', handleSeatStatusUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('seatStatusUpdate', handleSeatStatusUpdate as EventListener);
+    };
+  }, []);
 
   const handleSeatClick = (seat: Seat) => {
     setSelectedSeat(seat.number);
@@ -311,8 +331,14 @@ const InteractiveSeatMap = ({
                       <span className="text-xs font-medium">{seat.number}</span>
                       {seat.student && !showOnlyAvailable && (
                         <div className="flex items-center gap-1 mt-1">
-                          <User className="w-3 h-3 text-red-500" />
-                          <span className="text-[10px] font-medium text-red-500">{seat.student.id}</span>
+                          <User className={cn(
+                            "w-3 h-3",
+                            seat.status === 'occupied' ? "text-red-500" : "text-purple-500"
+                          )} />
+                          <span className={cn(
+                            "text-[10px] font-medium",
+                            seat.status === 'occupied' ? "text-red-500" : "text-purple-500"
+                          )}>{seat.student.id}</span>
                         </div>
                       )}
                     </button>
@@ -320,7 +346,13 @@ const InteractiveSeatMap = ({
                   <TooltipContent>
                     <p>Seat {seat.number}</p>
                     <p>Status: {seat.status}</p>
-                    {seat.student && <p>Occupied by: {seat.student.name}</p>}
+                    {seat.student && (
+                      seat.status === 'pre-booked' ? (
+                        <p>Pre-booked by: {seat.student.name}</p>
+                      ) : (
+                        <p>Occupied by: {seat.student.name}</p>
+                      )
+                    )}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -329,12 +361,21 @@ const InteractiveSeatMap = ({
         })}
       </div>
 
-      <StudentInfoDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        student={selectedStudent || undefined}
-        seatNumber={selectedSeat || ''}
-      />
+      {selectedSeat && seats.find(s => s.number === selectedSeat)?.status === 'pre-booked' ? (
+        <PreBookedSeatDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          student={selectedStudent || undefined}
+          seatNumber={selectedSeat}
+        />
+      ) : (
+        <StudentInfoDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          student={selectedStudent || undefined}
+          seatNumber={selectedSeat || ''}
+        />
+      )}
     </div>
   );
 };

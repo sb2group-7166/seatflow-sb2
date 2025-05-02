@@ -35,7 +35,8 @@ import {
   Plus,
   Receipt,
   Building2,
-  Wrench
+  Wrench,
+  Share2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -623,47 +624,77 @@ const ExpensesPage = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs font-medium">Expense ID</TableHead>
-                    <TableHead className="text-xs font-medium">Description</TableHead>
-                    <TableHead className="text-xs font-medium">Amount</TableHead>
-                    <TableHead className="text-xs font-medium">Date</TableHead>
-                    <TableHead className="text-xs font-medium">Category</TableHead>
-                    <TableHead className="text-xs font-medium">Payment Method</TableHead>
-                    <TableHead className="text-xs font-medium">Status</TableHead>
-                    <TableHead className="text-xs font-medium">Actions</TableHead>
+                  <TableRow className="border-b-2 border-gray-200 hover:bg-transparent">
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Expense ID</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Category</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Description</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Amount</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Date</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredExpenses.length > 0 ? (
                     filteredExpenses.map((expense) => (
-                      <TableRow key={expense.id}>
-                        <TableCell className="text-xs">{expense.id}</TableCell>
-                        <TableCell className="text-xs">{expense.description}</TableCell>
-                        <TableCell className="text-xs">{formatRupee(expense.amount)}</TableCell>
-                        <TableCell className="text-xs">{expense.date}</TableCell>
-                        <TableCell className="text-xs">{expense.category}</TableCell>
-                        <TableCell className="text-xs">{expense.paymentMethod}</TableCell>
-                        <TableCell>{getStatusBadge(expense.status)}</TableCell>
+                      <TableRow key={expense.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <TableCell className="font-medium whitespace-nowrap text-xs border-r border-gray-100">{expense.id}</TableCell>
+                        <TableCell className="border-r border-gray-100">
+                          <Badge variant="outline" className="capitalize text-xs">
+                            {expense.category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-xs border-r border-gray-100">{expense.description}</TableCell>
+                        <TableCell className="whitespace-nowrap text-red-600 font-bold text-xs border-r border-gray-100">{formatRupee(expense.amount)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-xs border-r border-gray-100">
+                          {expense.date ? format(new Date(expense.date), 'dd/MM/yyyy') : '-'}
+                        </TableCell>
                         <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => {
-                              setCurrentReceipt(expense);
-                              setShowReceiptPreview(true);
-                            }}
-                          >
-                            <Receipt className="h-4 w-4 mr-1" />
-                            Receipt
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-xs hover:bg-green-50 hover:text-green-600 hover:border-green-200"
+                              onClick={() => {
+                                setCurrentReceipt(expense);
+                                setShowReceiptPreview(true);
+                              }}
+                            >
+                              <Receipt className="h-3 w-3 mr-1" />
+                              Receipt
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                              onClick={() => {
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: 'Expense Receipt',
+                                    text: `Expense Receipt for ${expense.description}`,
+                                    url: window.location.href,
+                                  });
+                                } else {
+                                  toast({
+                                    title: "Share",
+                                    description: "Sharing is not supported on this device",
+                                  });
+                                }
+                              }}
+                            >
+                              <Share2 className="h-3 w-3 mr-1" />
+                              Share
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8">
-                        <p className="text-xs text-muted-foreground">No expenses found matching the current filters</p>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <FileText className="h-8 w-8 text-gray-300" />
+                          <p className="text-muted-foreground text-xs">No expenses found matching the current filters</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}

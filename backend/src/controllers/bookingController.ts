@@ -2,9 +2,26 @@ import { Request, Response } from 'express';
 import Booking from '../models/Booking';
 import Seat from '../models/Seat';
 import User from '../models/User';
+import { AuthRequest, BookingStatus } from '../types';
 
-export const createBooking = async (req: Request, res: Response) => {
+interface CreateBookingBody {
+  seatId: string;
+  startTime: string;
+  endTime: string;
+  bookingType: string;
+  price: number;
+}
+
+interface UpdateBookingStatusBody {
+  status: BookingStatus;
+}
+
+export const createBooking = async (req: AuthRequest<{}, {}, CreateBookingBody>, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
     const {
       seatId,
       startTime,
@@ -13,7 +30,7 @@ export const createBooking = async (req: Request, res: Response) => {
       price
     } = req.body;
 
-    const userId = req.user.userId;
+    const userId = req.user._id;
 
     // Check if user exists
     const user = await User.findById(userId);
@@ -54,7 +71,7 @@ export const createBooking = async (req: Request, res: Response) => {
       endTime,
       bookingType,
       price,
-      status: 'pending'
+      status: 'pending' as BookingStatus
     });
 
     await booking.save();
@@ -68,7 +85,7 @@ export const createBooking = async (req: Request, res: Response) => {
       message: 'Booking created successfully',
       booking: await booking.populate(['user', 'seat'])
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ message: 'Error creating booking', error: error.message });
   }
 };
@@ -91,13 +108,17 @@ export const getAllBookings = async (req: Request, res: Response) => {
       .sort({ startTime: -1 });
 
     res.json(bookings);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ message: 'Error fetching bookings', error: error.message });
   }
 };
 
-export const getBookingById = async (req: Request, res: Response) => {
+export const getBookingById = async (req: AuthRequest<{ id: string }>, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
     const booking = await Booking.findById(req.params.id)
       .populate(['user', 'seat']);
     
@@ -106,18 +127,22 @@ export const getBookingById = async (req: Request, res: Response) => {
     }
 
     // Check if user has permission to view this booking
-    if (req.user.role !== 'admin' && booking.user._id.toString() !== req.user.userId) {
+    if (req.user.role !== 'admin' && booking.user._id.toString() !== req.user._id) {
       return res.status(403).json({ message: 'Not authorized to view this booking' });
     }
 
     res.json(booking);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ message: 'Error fetching booking', error: error.message });
   }
 };
 
-export const updateBookingStatus = async (req: Request, res: Response) => {
+export const updateBookingStatus = async (req: AuthRequest<{ id: string }, {}, UpdateBookingStatusBody>, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
     const { status } = req.body;
     const booking = await Booking.findById(req.params.id);
     
@@ -126,7 +151,7 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
     }
 
     // Only allow admin or booking owner to update status
-    if (req.user.role !== 'admin' && booking.user.toString() !== req.user.userId) {
+    if (req.user.role !== 'admin' && booking.user.toString() !== req.user._id) {
       return res.status(403).json({ message: 'Not authorized to update this booking' });
     }
 
@@ -140,14 +165,14 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       const seat = await Seat.findById(booking.seat);
       if (seat && seat.currentBooking?.toString() === booking._id.toString()) {
         seat.status = 'available';
-        seat.currentBooking = null;
+        seat.currentBooking = undefined;
         await seat.save();
       }
     } else if (status === 'completed') {
       const seat = await Seat.findById(booking.seat);
       if (seat) {
         seat.status = 'available';
-        seat.currentBooking = null;
+        seat.currentBooking = undefined;
         await seat.save();
       }
     }
@@ -159,14 +184,18 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
       message: 'Booking status updated successfully',
       booking: await booking.populate(['user', 'seat'])
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ message: 'Error updating booking status', error: error.message });
   }
 };
 
-export const getUserBookings = async (req: Request, res: Response) => {
+export const getUserBookings = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user.userId;
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
+    const userId = req.user._id;
     const { status } = req.query;
     
     const filter: any = { user: userId };
@@ -177,13 +206,17 @@ export const getUserBookings = async (req: Request, res: Response) => {
       .sort({ startTime: -1 });
 
     res.json(bookings);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ message: 'Error fetching user bookings', error: error.message });
   }
 };
 
-export const cancelBooking = async (req: Request, res: Response) => {
+export const cancelBooking = async (req: AuthRequest<{ id: string }>, res: Response) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+
     const booking = await Booking.findById(req.params.id);
     
     if (!booking) {
@@ -191,7 +224,7 @@ export const cancelBooking = async (req: Request, res: Response) => {
     }
 
     // Only allow admin or booking owner to cancel
-    if (req.user.role !== 'admin' && booking.user.toString() !== req.user.userId) {
+    if (req.user.role !== 'admin' && booking.user.toString() !== req.user._id) {
       return res.status(403).json({ message: 'Not authorized to cancel this booking' });
     }
 
@@ -200,24 +233,23 @@ export const cancelBooking = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Cannot cancel booking in current status' });
     }
 
-    booking.status = 'cancelled';
+    booking.status = 'cancelled' as BookingStatus;
     booking.updatedAt = new Date();
+    await booking.save();
 
     // Update seat status
     const seat = await Seat.findById(booking.seat);
     if (seat && seat.currentBooking?.toString() === booking._id.toString()) {
       seat.status = 'available';
-      seat.currentBooking = null;
+      seat.currentBooking = undefined;
       await seat.save();
     }
-
-    await booking.save();
 
     res.json({
       message: 'Booking cancelled successfully',
       booking: await booking.populate(['user', 'seat'])
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({ message: 'Error cancelling booking', error: error.message });
   }
 }; 

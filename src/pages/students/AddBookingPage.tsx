@@ -169,23 +169,28 @@ const AddBookingPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* Header Section */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="default"
-              onClick={() => navigate('/students')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">New Booking</h1>
-              <p className="text-muted-foreground">
-                Create a new student seat booking
-              </p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => navigate('/students/booking')}
+                className="flex items-center gap-2 hover:bg-primary/10"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <div>
+                <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+                  New Booking
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  Create a new student seat booking
+                </p>
+              </div>
             </div>
           </div>
         </div>

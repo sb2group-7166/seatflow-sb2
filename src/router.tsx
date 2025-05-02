@@ -1,21 +1,47 @@
-import { createBrowserRouter } from 'react-router-dom';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import DashboardPage from '@/pages/dashboard/Dashboard';
-import NewBookingPage from '@/pages/operations/booking/NewBookingPage';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import DashboardPage from '@/pages/dashboard';
+import LoginPage from './pages/auth/login';
+import SignupPage from './pages/auth/signup';
+import AttendancePage from './pages/AttendancePage';
+
+const isAuthenticated = () => {
+  return !!localStorage.getItem('token');
+};
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+};
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <DashboardLayout />,
-    children: [
+    element: <Navigate to="/dashboard" replace />,
+  },
       {
-        index: true,
-        element: <DashboardPage />
+    path: '/login',
+    element: <LoginPage />,
       },
       {
-        path: 'bookings/new',
-        element: <NewBookingPage />
-      }
-    ]
-  }
+    path: '/signup',
+    element: <SignupPage />,
+  },
+  {
+    path: '/dashboard',
+    element: (
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/attendance',
+    element: (
+      <ProtectedRoute>
+        <AttendancePage />
+      </ProtectedRoute>
+    ),
+  },
 ]); 

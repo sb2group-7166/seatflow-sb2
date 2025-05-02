@@ -38,7 +38,8 @@ import {
   ChevronRight,
   QrCode,
   User,
-  Loader2
+  Loader2,
+  Receipt
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -633,17 +634,17 @@ const DuePaymentsPage = () => {
         {/* Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card 
-            className={`bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200 cursor-pointer transition-all hover:shadow-md ${
+            className={`border-amber-200 cursor-pointer transition-all hover:shadow-md ${
               activeFilter === "total" ? "ring-2 ring-amber-500" : ""
             }`}
             onClick={() => handleCardClick("total")}
           >
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Due Amount</CardTitle>
+              <CardTitle className="text-sm font-bold">Total Due Amount</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-xl sm:text-2xl font-bold flex items-center">
+                <div className="text-xl sm:text-2xl font-bold flex items-center text-red-600">
                   <IndianRupee className="h-5 w-5 mr-1" />
                   1500
                 </div>
@@ -654,17 +655,17 @@ const DuePaymentsPage = () => {
           </Card>
 
           <Card 
-            className={`bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 cursor-pointer transition-all hover:shadow-md ${
+            className={`border-blue-200 cursor-pointer transition-all hover:shadow-md ${
               activeFilter === "monthly" ? "ring-2 ring-blue-500" : ""
             }`}
             onClick={() => handleCardClick("monthly")}
           >
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">{months[selectedMonth]}'s Due Amount</CardTitle>
+              <CardTitle className="text-sm font-bold">{months[selectedMonth]}'s Due Amount</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold flex items-center">
+                <div className="text-2xl font-bold flex items-center text-red-600">
                   <IndianRupee className="h-5 w-5 mr-1" />
                   500
                 </div>
@@ -675,17 +676,17 @@ const DuePaymentsPage = () => {
           </Card>
 
           <Card 
-            className={`bg-gradient-to-br from-green-50 to-green-100 border-green-200 cursor-pointer transition-all hover:shadow-md ${
+            className={`border-green-200 cursor-pointer transition-all hover:shadow-md ${
               activeFilter === "upcoming" ? "ring-2 ring-green-500" : ""
             }`}
             onClick={() => handleCardClick("upcoming")}
           >
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Upcoming Payments</CardTitle>
+              <CardTitle className="text-sm font-bold">Upcoming Payments</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold flex items-center">
+                <div className="text-2xl font-bold flex items-center text-red-600">
                   <IndianRupee className="h-5 w-5 mr-1" />
                   1000
                 </div>
@@ -749,48 +750,66 @@ const DuePaymentsPage = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap">Seat No</TableHead>
-                    <TableHead className="whitespace-nowrap">Student</TableHead>
-                    <TableHead className="whitespace-nowrap">Amount</TableHead>
-                    <TableHead className="whitespace-nowrap">Due Date</TableHead>
-                    <TableHead className="whitespace-nowrap">Description</TableHead>
-                    <TableHead className="whitespace-nowrap">Actions</TableHead>
+                  <TableRow className="border-b-2 border-gray-200 hover:bg-transparent">
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Seat No</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Student</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Amount</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Due Date</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600 border-r border-gray-200">Payment Mode</TableHead>
+                    <TableHead className="whitespace-nowrap text-xs font-semibold text-gray-600">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredPayments.length > 0 ? (
                     filteredPayments.map((payment) => (
-                      <TableRow key={payment.seatNo}>
-                        <TableCell className="font-medium whitespace-nowrap">{payment.seatNo}</TableCell>
-                        <TableCell>
+                      <TableRow key={payment.seatNo} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <TableCell className="font-medium whitespace-nowrap text-xs border-r border-gray-100">{payment.seatNo}</TableCell>
+                        <TableCell className="border-r border-gray-100">
                           <div>
-                            <p className="font-medium">{payment.studentName}</p>
+                            <p className="font-medium text-xs">{payment.studentName}</p>
                             <p className="text-xs text-muted-foreground">{payment.studentId}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="whitespace-nowrap">{formatRupee(payment.amount)}</TableCell>
-                        <TableCell className="whitespace-nowrap">{payment.dueDate}</TableCell>
-                        <TableCell className="max-w-[200px] truncate">{payment.description}</TableCell>
+                        <TableCell className="whitespace-nowrap text-green-600 font-bold text-xs border-r border-gray-100">{formatRupee(payment.amount)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-xs border-r border-gray-100">
+                          {payment.dueDate ? format(new Date(payment.dueDate), 'dd/MM/yyyy') : '-'}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-xs border-r border-gray-100">{payment.paymentMethod}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button 
-                              variant="default" 
-                              size="sm"
-                              className="bg-green-500 hover:bg-green-600 text-white w-full sm:w-auto"
-                              onClick={() => handleCollectPayment(payment)}
-                            >
-                              <Wallet className="h-4 w-4 mr-1" />
-                              Collect
-                            </Button>
-                            <Button 
                               variant="outline" 
                               size="sm"
-                              className="border-amber-500 text-amber-500 hover:bg-amber-50 w-full sm:w-auto"
-                              onClick={() => handleScheduleReminder(payment)}
+                              className="text-xs hover:bg-green-50 hover:text-green-600 hover:border-green-200"
+                              onClick={() => {
+                                setCurrentReceipt(payment);
+                                setShowReceiptPreview(true);
+                              }}
                             >
-                              <Bell className="h-4 w-4 mr-1" />
-                              Remind
+                              <Receipt className="h-3 w-3 mr-1" />
+                              Receipt
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
+                              onClick={() => {
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: 'Due Payment Receipt',
+                                    text: `Due Payment Receipt for ${payment.studentName}`,
+                                    url: window.location.href,
+                                  });
+                                } else {
+                                  toast({
+                                    title: "Share",
+                                    description: "Sharing is not supported on this device",
+                                  });
+                                }
+                              }}
+                            >
+                              <Share2 className="h-3 w-3 mr-1" />
+                              Share
                             </Button>
                           </div>
                         </TableCell>
@@ -799,7 +818,10 @@ const DuePaymentsPage = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8">
-                        <p className="text-muted-foreground">No payments found matching the current filters</p>
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <FileText className="h-8 w-8 text-gray-300" />
+                          <p className="text-muted-foreground text-xs">No due payments found matching the current filters</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}

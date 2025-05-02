@@ -1,4 +1,4 @@
-package app.lovable.bbdeaa69246942caa443ecc439620bf6;
+package com.seatflow.admin;
 
 import com.getcapacitor.BridgeActivity;
 

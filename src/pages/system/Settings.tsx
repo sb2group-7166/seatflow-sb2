@@ -15,7 +15,28 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { SeatZone } from "@/types";
-import { Armchair, BookOpen, CalendarDays, Clock, Layout, MapPin, Settings as SettingsIcon, Sofa, Users, Bell } from "lucide-react";
+import { 
+  Armchair, 
+  BookOpen, 
+  CalendarDays, 
+  Clock, 
+  Layout, 
+  MapPin, 
+  Settings as SettingsIcon, 
+  Sofa, 
+  Users, 
+  Bell, 
+  CreditCard, 
+  Shield, 
+  Globe, 
+  Database, 
+  Mail, 
+  Lock, 
+  FileText,
+  Zap,
+  Palette,
+  Languages
+} from "lucide-react";
 
 const seatLayoutSchema = z.object({
   seatingMode: z.string(),
@@ -126,8 +147,12 @@ const SettingsPage = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="layout" className="space-y-4">
-          <TabsList>
+        <Tabs defaultValue="general" className="space-y-4">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <TabsTrigger value="general">
+              <SettingsIcon className="w-4 h-4 mr-2" />
+              General
+            </TabsTrigger>
             <TabsTrigger value="layout">
               <Layout className="w-4 h-4 mr-2" />
               Layout
@@ -140,14 +165,97 @@ const SettingsPage = () => {
               <Users className="w-4 h-4 mr-2" />
               Users
             </TabsTrigger>
-            <TabsTrigger value="time">
-              <Clock className="w-4 h-4 mr-2" />
-              Time Settings
+            <TabsTrigger value="security">
+              <Shield className="w-4 h-4 mr-2" />
+              Security
+            </TabsTrigger>
+            <TabsTrigger value="appearance">
+              <Palette className="w-4 h-4 mr-2" />
+              Appearance
             </TabsTrigger>
           </TabsList>
 
+          {/* General Settings */}
+          <TabsContent value="general">
+            <div className="grid gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>General Settings</CardTitle>
+                  <CardDescription>
+                    Configure basic system settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>System Name</Label>
+                    <Input defaultValue="SB2 Library Management System" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time Zone</Label>
+                    <Select defaultValue="asia/kolkata">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="asia/kolkata">Asia/Kolkata (IST)</SelectItem>
+                        <SelectItem value="asia/dubai">Asia/Dubai (GST)</SelectItem>
+                        <SelectItem value="asia/singapore">Asia/Singapore (SGT)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date Format</Label>
+                    <Select defaultValue="dd/mm/yyyy">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select date format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
+                        <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
+                        <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="maintenance-mode" />
+                    <Label htmlFor="maintenance-mode">Maintenance Mode</Label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Integration Settings</CardTitle>
+                  <CardDescription>
+                    Configure third-party integrations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Google Maps API Key</Label>
+                    <Input type="password" placeholder="Enter API key" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Payment Gateway</Label>
+                    <Select defaultValue="razorpay">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment gateway" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="razorpay">Razorpay</SelectItem>
+                        <SelectItem value="stripe">Stripe</SelectItem>
+                        <SelectItem value="paypal">PayPal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
           {/* Layout Settings */}
           <TabsContent value="layout">
+            <div className="grid gap-4">
             <Card>
               <CardHeader>
                 <CardTitle>Seat Layout Configuration</CardTitle>
@@ -180,13 +288,38 @@ const SettingsPage = () => {
                     </div>
               </CardContent>
             </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Seating Features</CardTitle>
+                  <CardDescription>
+                    Configure advanced seating features
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="group-booking" />
+                    <Label htmlFor="group-booking">Enable group booking</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="waitlist" />
+                    <Label htmlFor="waitlist">Enable waitlist</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="auto-assign" />
+                    <Label htmlFor="auto-assign">Auto-assign seats</Label>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Notification Settings */}
           <TabsContent value="notifications">
+            <div className="grid gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>Notification Settings</CardTitle>
+                  <CardTitle>Notification Preferences</CardTitle>
                 <CardDescription>
                   Configure how and when you receive notifications
                 </CardDescription>
@@ -206,10 +339,47 @@ const SettingsPage = () => {
                 </div>
               </CardContent>
             </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Email Templates</CardTitle>
+                  <CardDescription>
+                    Configure email notification templates
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Booking Confirmation</Label>
+                    <Select defaultValue="default">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default Template</SelectItem>
+                        <SelectItem value="custom">Custom Template</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Reminder Notifications</Label>
+                    <Select defaultValue="default">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default Template</SelectItem>
+                        <SelectItem value="custom">Custom Template</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* User Settings */}
           <TabsContent value="users">
+            <div className="grid gap-4">
             <Card>
               <CardHeader>
                 <CardTitle>User Management</CardTitle>
@@ -226,34 +396,187 @@ const SettingsPage = () => {
                   <Switch id="require-verification" />
                   <Label htmlFor="require-verification">Require email verification</Label>
                 </div>
-              </CardContent>
-            </Card>
+                  <div className="space-y-2">
+                    <Label>Default User Role</Label>
+                    <Select defaultValue="student">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select default role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="staff">Staff</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Access Control</CardTitle>
+                  <CardDescription>
+                    Configure access control settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Session Timeout (minutes)</Label>
+                    <Input type="number" defaultValue="30" />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="ip-restriction" />
+                    <Label htmlFor="ip-restriction">Enable IP restriction</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="2fa" />
+                    <Label htmlFor="2fa">Require 2FA for admins</Label>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
-          {/* Time Settings */}
-          <TabsContent value="time">
+          {/* Security Settings */}
+          <TabsContent value="security">
+            <div className="grid gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Security Settings</CardTitle>
+                  <CardDescription>
+                    Configure security and privacy settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="password-policy" />
+                    <Label htmlFor="password-policy">Enforce password policy</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Password Expiry (days)</Label>
+                    <Input type="number" defaultValue="90" />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="login-attempts" />
+                    <Label htmlFor="login-attempts">Limit login attempts</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Max Login Attempts</Label>
+                    <Input type="number" defaultValue="5" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Data Protection</CardTitle>
+                  <CardDescription>
+                    Configure data protection settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="data-encryption" />
+                    <Label htmlFor="data-encryption">Enable data encryption</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="audit-logs" />
+                    <Label htmlFor="audit-logs">Enable audit logs</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Data Retention Period (days)</Label>
+                    <Input type="number" defaultValue="365" />
+                  </div>
+              </CardContent>
+            </Card>
+            </div>
+          </TabsContent>
+
+          {/* Appearance Settings */}
+          <TabsContent value="appearance">
+            <div className="grid gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Theme Settings</CardTitle>
+                  <CardDescription>
+                    Configure the application's appearance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Theme</Label>
+                    <Select defaultValue="light">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select theme" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="light">Light</SelectItem>
+                        <SelectItem value="dark">Dark</SelectItem>
+                        <SelectItem value="system">System</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Primary Color</Label>
+                    <Select defaultValue="blue">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select color" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="blue">Blue</SelectItem>
+                        <SelectItem value="green">Green</SelectItem>
+                        <SelectItem value="purple">Purple</SelectItem>
+                        <SelectItem value="red">Red</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="compact-mode" />
+                    <Label htmlFor="compact-mode">Compact mode</Label>
+                  </div>
+                </CardContent>
+              </Card>
+
             <Card>
               <CardHeader>
-                <CardTitle>Time Settings</CardTitle>
+                  <CardTitle>Display Settings</CardTitle>
                 <CardDescription>
-                  Configure time-related settings and schedules
+                    Configure display preferences
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Default Booking Duration (minutes)</Label>
-                  <Input type="number" defaultValue="120" />
+                    <Label>Date Format</Label>
+                    <Select defaultValue="dd/mm/yyyy">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select date format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dd/mm/yyyy">DD/MM/YYYY</SelectItem>
+                        <SelectItem value="mm/dd/yyyy">MM/DD/YYYY</SelectItem>
+                        <SelectItem value="yyyy-mm-dd">YYYY-MM-DD</SelectItem>
+                      </SelectContent>
+                    </Select>
                     </div>
                 <div className="space-y-2">
-                  <Label>Maximum Booking Duration (minutes)</Label>
-                  <Input type="number" defaultValue="240" />
+                    <Label>Time Format</Label>
+                    <Select defaultValue="12h">
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select time format" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="12h">12-hour</SelectItem>
+                        <SelectItem value="24h">24-hour</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 <div className="flex items-center space-x-2">
-                  <Switch id="allow-extensions" />
-                  <Label htmlFor="allow-extensions">Allow booking extensions</Label>
+                    <Switch id="show-seconds" />
+                    <Label htmlFor="show-seconds">Show seconds in time</Label>
                 </div>
               </CardContent>
             </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

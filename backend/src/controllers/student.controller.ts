@@ -1,8 +1,13 @@
 import { Request, Response } from 'express';
 import { Student } from '../models/student.model';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import { Multer } from 'multer';
 
-export const createStudent = async (req: Request, res: Response) => {
+interface MulterRequest extends Request {
+  files?: Express.Multer.File[];
+}
+
+export const createStudent = async (req: MulterRequest, res: Response) => {
   try {
     const { name, fatherName, studentId, email, phone, status } = req.body;
     
@@ -22,15 +27,14 @@ export const createStudent = async (req: Request, res: Response) => {
     let profilePhotoUrl = null;
     let idProofUrl = null;
 
-    if (req.files) {
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      
-      if (files['profilePhoto']?.[0]) {
-        profilePhotoUrl = await uploadToCloudinary(files['profilePhoto'][0].path);
+    if (req.files && req.files.length > 0) {
+      // First file is profile photo, second is ID proof
+      if (req.files[0]) {
+        profilePhotoUrl = await uploadToCloudinary(req.files[0].path);
       }
       
-      if (files['idProof']?.[0]) {
-        idProofUrl = await uploadToCloudinary(files['idProof'][0].path);
+      if (req.files[1]) {
+        idProofUrl = await uploadToCloudinary(req.files[1].path);
       }
     }
 
@@ -50,10 +54,11 @@ export const createStudent = async (req: Request, res: Response) => {
       data: student
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     res.status(500).json({
       success: false,
       message: 'Error creating student',
-      error: error.message
+      error: errorMessage
     });
   }
 };
@@ -65,7 +70,7 @@ export const getStudents = async (req: Request, res: Response) => {
       success: true,
       data: students
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({
       success: false,
       message: 'Error fetching students',
@@ -87,7 +92,7 @@ export const getStudentById = async (req: Request, res: Response) => {
       success: true,
       data: student
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({
       success: false,
       message: 'Error fetching student',
@@ -96,7 +101,7 @@ export const getStudentById = async (req: Request, res: Response) => {
   }
 };
 
-export const updateStudent = async (req: Request, res: Response) => {
+export const updateStudent = async (req: MulterRequest, res: Response) => {
   try {
     const { name, fatherName, studentId, email, phone, status } = req.body;
     
@@ -126,15 +131,14 @@ export const updateStudent = async (req: Request, res: Response) => {
     }
 
     // Upload new files if they exist
-    if (req.files) {
-      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      
-      if (files['profilePhoto']?.[0]) {
-        student.profilePhoto = await uploadToCloudinary(files['profilePhoto'][0].path);
+    if (req.files && req.files.length > 0) {
+      // First file is profile photo, second is ID proof
+      if (req.files[0]) {
+        student.profilePhoto = await uploadToCloudinary(req.files[0].path);
       }
       
-      if (files['idProof']?.[0]) {
-        student.idProof = await uploadToCloudinary(files['idProof'][0].path);
+      if (req.files[1]) {
+        student.idProof = await uploadToCloudinary(req.files[1].path);
       }
     }
 
@@ -153,10 +157,11 @@ export const updateStudent = async (req: Request, res: Response) => {
       data: student
     });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     res.status(500).json({
       success: false,
       message: 'Error updating student',
-      error: error.message
+      error: errorMessage
     });
   }
 };
@@ -174,7 +179,7 @@ export const deleteStudent = async (req: Request, res: Response) => {
       success: true,
       message: 'Student deleted successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({
       success: false,
       message: 'Error deleting student',

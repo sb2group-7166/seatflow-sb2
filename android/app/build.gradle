@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "app.lovable.bbdeaa69246942caa443ecc439620bf6"
+    namespace "com.seatflow.admin"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.lovable.bbdeaa69246942caa443ecc439620bf6"
+        applicationId "com.seatflow.admin"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

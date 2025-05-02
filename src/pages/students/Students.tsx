@@ -49,6 +49,12 @@ import {
   Check,
   ChevronDown,
   ChevronLeft,
+  Eye,
+  MessageSquare,
+  AlertCircle,
+  Download,
+  Pencil,
+  CheckCircle2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,38 +82,198 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+
+interface Student {
+  id: string;
+  name: string;
+  email: string;
+  registeredOn: string;
+  status: 'active' | 'pending' | 'suspended' | 'inactive' | 'graduated' | 'on_leave';
+  lastActive: string;
+  photo: string;
+  idProof: string;
+  bookings: number;
+  violations: number;
+  phone: string;
+  address: string;
+  priority: 'high' | 'medium' | 'low';
+  notes: string;
+  seatNo: string;
+  dueDate: string;
+  fatherName?: string;
+  studentId?: string;
+  shift?: string;
+  admissionDate?: Date;
+  idProofFile?: File | null;
+  profilePhotoFile?: File | null;
+  dob?: string;
+  gender?: 'male' | 'female' | 'other';
+  city?: string;
+  state?: string;
+  pincode?: string;
+  whatsapp?: string;
+  course?: string;
+  idProofType?: string;
+  idProofNumber?: string;
+  idProofFront?: string;
+  idProofBack?: string;
+}
 
 interface StudentStats {
   totalStudents: number;
   activeStudents: number;
-  newStudents: number;
-  averageAttendance: number;
-  membershipTypes: {
-    name: string;
-    count: number;
-  }[];
-  attendanceTrend: {
-    date: string;
-    attendance: number;
-  }[];
-  activityHours: {
-    hour: string;
-    count: number;
-  }[];
+  inactiveStudents: number;
+  totalBookings: number;
+  totalViolations: number;
+  totalDues: number;
+}
+
+interface NewStudent {
+  name: string;
+  fatherName: string;
+  studentId: string;
+  email: string;
+  phone: string;
+  shift: string;
+  admissionDate: Date;
+  address: string;
+  idProof: File | null;
+  profilePhoto: File | null;
+}
+
+function StudentProfileDialog({ 
+  student, 
+  open, 
+  onOpenChange 
+}: { 
+  student: Student | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  if (!student) return null
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">Student Profile</DialogTitle>
+        </DialogHeader>
+        <ScrollArea className="h-[calc(90vh-100px)]">
+          <div className="space-y-6 p-4">
+            {/* Basic Information */}
+            <div className="bg-white/10 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Student ID</p>
+                  <p className="font-medium">{student.id}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium">{student.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{student.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="font-medium">{student.phone}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">WhatsApp</p>
+                  <p className="font-medium">{student.whatsapp || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Seat Number</p>
+                  <p className="font-medium">{student.seatNo || '-'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Due Information */}
+            <div className="bg-white/10 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Due Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Due Amount</p>
+                  <p className="font-medium text-red-500">₹{student.dueAmount}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Due Date</p>
+                  <p className="font-medium">
+                    {student.dueDate ? format(new Date(student.dueDate), "MMM dd, yyyy") : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Late Days</p>
+                  <p className="font-medium text-red-500">{student.lateDays} days</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Last Active</p>
+                  <p className="font-medium">{student.lastActive}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="bg-white/10 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Terms and Conditions</h3>
+              <div className="space-y-4">
+                <p className="text-sm">
+                  1. The student agrees to pay the due amount within the specified due date.
+                </p>
+                <p className="text-sm">
+                  2. Late payments will incur additional charges as per the institution's policy.
+                </p>
+                <p className="text-sm">
+                  3. The student is responsible for maintaining their contact information up to date.
+                </p>
+                <p className="text-sm">
+                  4. The institution reserves the right to take appropriate action for non-payment.
+                </p>
+              </div>
+            </div>
+
+            {/* Signature Section */}
+            <div className="bg-white/10 rounded-lg p-6">
+              <h3 className="text-lg font-semibold mb-4">Signature</h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Student Signature</p>
+                  <div className="h-20 border-2 border-dashed rounded-lg flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground">Student Signature</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Parent/Guardian Signature</p>
+                  <div className="h-20 border-2 border-dashed rounded-lg flex items-center justify-center">
+                    <p className="text-sm text-muted-foreground">Parent/Guardian Signature</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 const StudentsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedStudent, setSelectedStudent] = useState<null | any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showLargePhoto, setShowLargePhoto] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   
   const [isLoading, setIsLoading] = useState(true);
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const { toast } = useToast();
   const [isImporting, setIsImporting] = useState(false);
-  const [isSendingNotification, setIsSendingNotification] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newStudent, setNewStudent] = useState({
+  const [newStudent, setNewStudent] = useState<NewStudent>({
     name: '',
     fatherName: '',
     studentId: '',
@@ -116,18 +282,17 @@ const StudentsPage: React.FC = () => {
     shift: '',
     admissionDate: new Date(),
     address: '',
-    idProof: null as File | null,
-    profilePhoto: null as File | null
+    idProof: null,
+    profilePhoto: null
   });
   const [isSeatSelectionOpen, setIsSeatSelectionOpen] = useState(false);
   const [stats, setStats] = useState<StudentStats>({
     totalStudents: 0,
     activeStudents: 0,
-    newStudents: 0,
-    averageAttendance: 0,
-    membershipTypes: [],
-    attendanceTrend: [],
-    activityHours: []
+    inactiveStudents: 0,
+    totalBookings: 0,
+    totalViolations: 0,
+    totalDues: 0
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -138,7 +303,53 @@ const StudentsPage: React.FC = () => {
   const idProofInputRef = useRef<HTMLInputElement>(null);
   const profilePhotoInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedStudent, setEditedStudent] = useState<any>(null);
+  const [editedStudent, setEditedStudent] = useState<Student | null>(null);
+  const [showStudentTable, setShowStudentTable] = useState(true);
+  const [showCollectionForm, setShowCollectionForm] = useState(false);
+  const [selectedDue, setSelectedDue] = useState<any>(null);
+  const [collectionForm, setCollectionForm] = useState({
+    amount: '',
+    paymentMode: '',
+    description: '',
+    date: new Date().toISOString().split('T')[0]
+  });
+  const [dues, setDues] = useState([
+    { amount: 5000, category: "Monthly Fee", dueDate: "2024-05-15", addedBy: "Admin", status: "pending", lateDays: 0 },
+    { amount: 5000, category: "Monthly Fee", dueDate: "2024-04-15", addedBy: "Admin", status: "pending", lateDays: 15 },
+    { amount: 5000, category: "Monthly Fee", dueDate: "2024-03-15", addedBy: "Admin", status: "pending", lateDays: 45 },
+    { amount: 5000, category: "Monthly Fee", dueDate: "2024-02-15", addedBy: "Admin", status: "pending", lateDays: 75 },
+    { amount: 3571, category: "Monthly Fee", dueDate: "2024-01-15", addedBy: "Admin", status: "pending", lateDays: 105 },
+  ]);
+
+  const [collections, setCollections] = useState([
+    { 
+      date: "2024-04-15", 
+      category: "Monthly Fee",
+      amount: 5000, 
+      paymentMode: "UPI", 
+      seatNo: "A101",
+      description: "April Month Fee",
+      receivedBy: "John Admin",
+    },
+    { 
+      date: "2024-03-15", 
+      category: "Monthly Fee",
+      amount: 5000, 
+      paymentMode: "Bank Transfer", 
+      seatNo: "A101",
+      description: "March Month Fee",
+      receivedBy: "Sarah Admin",
+    },
+    { 
+      date: "2024-02-15", 
+      category: "Monthly Fee",
+      amount: 5000, 
+      paymentMode: "Cash", 
+      seatNo: "A101",
+      description: "February Month Fee",
+      receivedBy: "Mike Admin",
+    },
+  ]);
 
   // Student overview statistics
   const studentStats = {
@@ -156,6 +367,18 @@ const StudentsPage: React.FC = () => {
     : "0.0";
 
   // Mock student data using useMemo to prevent recreation on every render
+  const shifts = [
+    { id: 'morning', name: 'Morning Shift', time: '07:00 AM - 02:00 PM' },
+    { id: 'evening8', name: 'Evening Shift (08 Hours)', time: '02:00 PM - 10:00 PM' },
+    { id: 'evening10', name: 'Evening Shift (10 Hours)', time: '02:00 PM - 12:00 AM' },
+    { id: 'full15', name: 'Full Day Shift (15 Hours)', time: '07:00 AM - 10:00 PM' },
+    { id: 'full17', name: 'Full Day Shift (17 Hours)', time: '07:00 AM - 12:00 AM' },
+  ];
+
+  // Add default shift
+  const defaultShift = { id: 'default', name: 'Morning Shift', time: '07:00 AM - 02:00 PM' };
+
+  // Update the mock data to include default shift
   const studentsData = React.useMemo(() => [
     {
       id: "STU1001",
@@ -173,7 +396,8 @@ const StudentsPage: React.FC = () => {
       priority: "high",
       notes: "Regular student with good attendance",
       seatNo: "A101",
-      dueDate: "2024-04-15"
+      dueDate: "2024-04-15",
+      shift: defaultShift.id
     },
     {
       id: "STU1002",
@@ -260,14 +484,9 @@ const StudentsPage: React.FC = () => {
     { value: 'on_leave', label: 'On Leave' }
   ];
 
-  // Update the filteredAndSortedStudents function
+  // Update the filteredAndSortedStudents function to only show active students
   const filteredAndSortedStudents = React.useMemo(() => {
-    let filtered = [...studentsData];
-    
-    // Apply status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(student => student.status === statusFilter);
-    }
+    let filtered = [...studentsData].filter(student => student.status === 'active');
     
     // Apply search filter
     if (searchTerm) {
@@ -281,16 +500,75 @@ const StudentsPage: React.FC = () => {
     }
     
     return filtered;
-  }, [studentsData, statusFilter, searchTerm]);
+  }, [studentsData, searchTerm]);
+
+  // Update the shift column display
+  const renderShiftCell = (student: Student) => {
+    const currentShift = student.shift ? shifts.find(s => s.id === student.shift) : defaultShift;
+    return (
+      <TableCell className="py-3 border-r border-dashed" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          {isEditing && editedStudent?.id === student.id ? (
+            <div className="flex items-center gap-2">
+              <Select
+                value={editedStudent.shift || defaultShift.id}
+                onValueChange={(value) => setEditedStudent(prev => prev ? { ...prev, shift: value } : null)}
+              >
+                <SelectTrigger className="h-7 w-[140px]">
+                  <SelectValue placeholder="Select shift" />
+                </SelectTrigger>
+                <SelectContent>
+                  {shifts.map(shift => (
+                    <SelectItem key={shift.id} value={shift.id}>
+                      <div className="flex flex-col">
+                        <span>{shift.name}</span>
+                        <span className="text-xs text-muted-foreground">{shift.time}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                className="h-7 px-2 text-xs font-medium bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSave();
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-sm">
+                {currentShift?.name || defaultShift.name}
+              </span>
+              {!isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200 shadow-sm hover:shadow-md transition-all duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditStudent(student);
+                  }}
+                >
+                  Change
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </TableCell>
+    );
+  };
 
   // Function to handle student editing
-  const handleEditStudent = (student) => {
-    setSelectedStudent(student);
-    toast({
-      title: "Edit Initiated",
-      description: `Opening editor for student ${student.name}`,
-    });
-    // In a real app, you would open a dialog or form for editing
+  const handleEditStudent = (student: Student) => {
+    setEditedStudent({ ...student });
+    setIsEditing(true);
   };
 
   const handleAddStudent = async () => {
@@ -334,21 +612,10 @@ const StudentsPage: React.FC = () => {
       setStats({
         totalStudents: studentsData.length,
         activeStudents: studentsData.filter(s => s.status === 'active').length,
-        newStudents: studentsData.filter(s => s.status === 'pending').length,
-          averageAttendance: 85,
-          membershipTypes: [
-            { name: 'Premium', count: 45 },
-            { name: 'Standard', count: 75 },
-            { name: 'Basic', count: 30 }
-          ],
-          attendanceTrend: Array.from({ length: 7 }, (_, i) => ({
-            date: format(new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000), 'MMM dd'),
-            attendance: Math.floor(Math.random() * 20) + 80
-          })),
-          activityHours: Array.from({ length: 24 }, (_, i) => ({
-            hour: `${i}:00`,
-            count: Math.floor(Math.random() * 30) + 10
-          }))
+        inactiveStudents: studentsData.filter(s => s.status === 'inactive').length,
+        totalBookings: 0,
+        totalViolations: 0,
+        totalDues: 0
       });
       } catch (error) {
       console.error('Error loading students:', error);
@@ -379,7 +646,7 @@ const StudentsPage: React.FC = () => {
     {
       id: 'add-student',
       title: 'Add Student',
-      value: stats.newStudents,
+      value: stats.inactiveStudents,
       icon: UserPlus,
       color: 'from-green-500 to-green-600',
       route: '/students/add',
@@ -397,7 +664,7 @@ const StudentsPage: React.FC = () => {
     {
       id: 'old-students',
       title: 'Old Students',
-      value: `${stats.averageAttendance}%`,
+      value: `${stats.totalStudents - stats.activeStudents - stats.inactiveStudents}`,
       icon: GraduationCap,
       color: 'from-amber-500 to-amber-600',
       route: '/students/old',
@@ -439,56 +706,114 @@ const StudentsPage: React.FC = () => {
     }
   };
 
-  const handleSendNotification = async () => {
-    setIsSendingNotification(true);
+  // Update the card click handler
+  const handleCardClick = (route: string) => {
+    if (route === '/students') {
+      setShowStudentTable(true);
+    } else {
+      navigate(route);
+    }
+  };
+
+  const handleDeleteStudent = (student: Student) => {
+    setStudents(students.filter(s => s.id !== student.id));
+    toast({
+      title: "Student deleted",
+      description: "Student has been deleted successfully.",
+    });
+  };
+
+  // Update the handleCollectionSubmit function
+  const handleCollectionSubmit = async () => {
     try {
-      // Here you would implement your actual notification sending logic
+      // Here you would implement your actual API call to record the collection
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       
+      // Create new collection record
+      const newCollection = {
+        date: collectionForm.date,
+        category: selectedDue.category,
+        amount: Number(collectionForm.amount),
+        paymentMode: collectionForm.paymentMode,
+        seatNo: student?.seatNo || "A101",
+        description: collectionForm.description,
+        receivedBy: "Current Admin", // This should come from your auth system
+      };
+
+      // Update collections state
+      setCollections(prev => [newCollection, ...prev]);
+
+      // Update dues state - mark the paid due as completed
+      setDues(prev => prev.map(due => 
+        due.dueDate === selectedDue.dueDate 
+          ? { ...due, status: "completed" }
+          : due
+      ));
+      
       toast({
-        title: "Notification Sent",
-        description: "Notifications have been sent to all students",
+        title: "Collection Recorded",
+        description: "Payment has been recorded successfully",
+      });
+      
+      setShowCollectionForm(false);
+      setSelectedDue(null);
+      setCollectionForm({
+        amount: '',
+        paymentMode: '',
+        description: '',
+        date: new Date().toISOString().split('T')[0]
       });
     } catch (error) {
       toast({
-        title: "Failed to Send",
-        description: "There was an error sending notifications",
+        title: "Error",
+        description: "Failed to record payment",
         variant: "destructive",
       });
-    } finally {
-      setIsSendingNotification(false);
     }
   };
 
-  const handleFileUpload = (type: 'idProof' | 'profilePhoto', file: File | null) => {
-    if (file) {
-      // Validate file type
-      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
-      if (type === 'profilePhoto' && !validImageTypes.includes(file.type)) {
-        toast({
-          title: "Invalid File",
-          description: "Please upload a valid image file (JPEG, PNG, GIF)",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File Too Large",
-          description: "File size should be less than 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setNewStudent({ ...newStudent, [type]: file });
+  // Update the dues table to show status
+  const renderDueStatus = (due: any) => {
+    if (due.status === "completed") {
+      return (
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+          Paid
+        </Badge>
+      );
     }
+    if (due.lateDays > 0) {
+      return (
+        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          Overdue
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+        Pending
+      </Badge>
+    );
   };
 
-  // Add photo modal component
-  const PhotoModal = () => {
+  // Update the dues table action button click handler
+  const handleCollectionClick = (due: any) => {
+    setSelectedDue(due);
+    setCollectionForm({
+      amount: due.amount.toString(),
+      paymentMode: '',
+      description: `${due.category} Payment`,
+      date: new Date().toISOString().split('T')[0]
+    });
+    setShowCollectionForm(true);
+  };
+
+  // Update the table row click handler
+  const handleRowClick = (student: Student) => {
+    navigate(`/students/${student.id}`);
+  };
+
+  // Add PhotoModal component
+  const PhotoModal: React.FC = () => {
     if (!selectedStudent || !showLargePhoto) return null;
 
     return (
@@ -523,853 +848,325 @@ const StudentsPage: React.FC = () => {
     );
   };
 
-  // Add this function to handle edit mode
-  const handleEditClick = (student: any) => {
-    setEditedStudent({ ...student });
-    setIsEditing(true);
-  };
-
-  // Add this function to handle save
-  const handleSave = async () => {
-    try {
-      // Here you would implement your actual API call to update the student
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      
-      toast({
-        title: "Success",
-        description: "Student information updated successfully",
-      });
-      
-      setSelectedStudent(editedStudent);
-      setIsEditing(false);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update student information",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Add this function to handle cancel
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditedStudent(null);
-  };
-
-  // Update the StudentDetailsModal component
-  const StudentDetailsModal = () => {
+  // Add StudentDetailsModal component
+  const StudentDetailsModal: React.FC = () => {
     if (!selectedStudent) return null;
     const student = isEditing ? editedStudent : selectedStudent;
 
+    if (!student) return null;
+
     return (
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
-        <DialogContent className="h-screen w-screen max-w-none p-0 overflow-hidden">
-          <div className="relative h-full flex flex-col">
-            {/* Header with close button */}
-            <div className="bg-white border-b p-2 flex items-center justify-between">
-              <DialogHeader>
-                <DialogTitle className="text-lg font-semibold text-gray-900">Student Profile</DialogTitle>
-                <DialogDescription className="text-gray-500 text-xs">
-                  {isEditing ? "Edit student information" : `Complete information for ${student.name}`}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex items-center gap-2 ml-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      Actions
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Student
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <AlertTriangle className="mr-2 h-4 w-4" />
-                      Give Notice
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Student
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-
-            <div className="flex-1 flex">
-              {/* Left Side - Student Profile */}
-              <div className="w-2/5 border-r overflow-y-auto p-4 space-y-4 h-[calc(100vh-8rem)]">
-                {/* Profile Photo Section */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4 sticky top-0 z-10">
-                  <div className="flex items-center gap-6">
-                    {/* Profile Photo */}
-                    <div className="flex flex-col items-center">
-                      <div className="w-32 h-40 border-2 border-gray-200 rounded-lg overflow-hidden">
-                        <img
-                          src={student.photo || "/placeholder.svg"}
-                          alt={student.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Name and ID */}
-                    <div className="flex flex-col gap-1">
-                      {isEditing ? (
-                        <div className="space-y-1">
-                          <Input
-                            value={student.name}
-                            onChange={(e) => setEditedStudent({ ...student, name: e.target.value })}
-                            placeholder="Full Name"
-                            className="text-xl font-semibold"
-                          />
-                          <Input
-                            value={student.id}
-                            onChange={(e) => setEditedStudent({ ...student, id: e.target.value })}
-                            placeholder="Student ID"
-                            className="text-sm"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <h3 className="text-xl font-semibold text-gray-900">{student.name}</h3>
-                          <p className="text-sm text-gray-500">ID: {student.id}</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Personal Information */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <h4 className="font-semibold text-base mb-4 flex items-center gap-2 text-gray-900">
-                    <User className="h-4 w-4 text-gray-500" />
-                    Personal Information
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Full Name *</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.name}
-                            onChange={(e) => setEditedStudent({ ...student, name: e.target.value })}
-                            placeholder="Enter student's full name"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.name || '-'}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Father's/Husband's Name *</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.fatherName}
-                            onChange={(e) => setEditedStudent({ ...student, fatherName: e.target.value })}
-                            placeholder="Enter father's/husband's name"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.fatherName || '-'}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Date of Birth *</Label>
-                        {isEditing ? (
-                          <Input
-                            type="date"
-                            value={student.dob}
-                            onChange={(e) => setEditedStudent({ ...student, dob: e.target.value })}
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.dob ? format(new Date(student.dob), "MMMM do, yyyy") : '-'}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Gender *</Label>
-                        {isEditing ? (
-                          <Select
-                            value={student.gender}
-                            onValueChange={(value) => setEditedStudent({ ...student, gender: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="male">Male</SelectItem>
-                              <SelectItem value="female">Female</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.gender || '-'}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Academic Information */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <h4 className="font-semibold text-base mb-4 flex items-center gap-2 text-gray-900">
-                    <GraduationCap className="h-4 w-4 text-gray-500" />
-                    Academic Information
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Seat Number</Label>
-                        {isEditing ? (
-                          <div className="flex gap-2">
-                            <Input
-                              value={student.seatNo}
-                              onChange={(e) => setEditedStudent({ ...student, seatNo: e.target.value })}
-                              placeholder="Enter seat number"
-                            />
-                            <Button variant="outline" size="sm">Select Seat</Button>
-                          </div>
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.seatNo || '-'}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Admission Date *</Label>
-                        {isEditing ? (
-                          <Input
-                            type="date"
-                            value={student.admissionDate}
-                            onChange={(e) => setEditedStudent({ ...student, admissionDate: e.target.value })}
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.admissionDate ? format(new Date(student.admissionDate), "MMMM do, yyyy") : '-'}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Course *</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.course}
-                            onChange={(e) => setEditedStudent({ ...student, course: e.target.value })}
-                            placeholder="Enter course name"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.course || '-'}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Shift</Label>
-                        {isEditing ? (
-                          <Select
-                            value={student.shift}
-                            onValueChange={(value) => setEditedStudent({ ...student, shift: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select shift" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="morning">Morning Shift</SelectItem>
-                              <SelectItem value="afternoon">Afternoon Shift</SelectItem>
-                              <SelectItem value="evening">Evening Shift</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900 pl-0">{student.shift || '-'}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-gray-500">Seat Number</Label>
-                      {isEditing ? (
-                        <div className="flex gap-2">
-                          <Input
-                            value={student.seatNo}
-                            onChange={(e) => setEditedStudent({ ...student, seatNo: e.target.value })}
-                            placeholder="Enter seat number"
-                          />
-                          <Button variant="outline" size="sm">Select Seat</Button>
-                        </div>
-                      ) : (
-                        <p className="text-sm font-medium text-gray-900">{student.seatNo || '-'}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <h4 className="font-semibold text-base mb-4 flex items-center gap-2 text-gray-900">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    Contact Information
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Email Address *</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.email}
-                            onChange={(e) => setEditedStudent({ ...student, email: e.target.value })}
-                            placeholder="Enter student's email"
-                            type="email"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.email || '-'}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Phone Number *</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.phone}
-                            onChange={(e) => setEditedStudent({ ...student, phone: e.target.value })}
-                            placeholder="Enter student's phone number"
-                            type="tel"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.phone || '-'}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-gray-500">WhatsApp Number</Label>
-                      {isEditing ? (
-                        <Input
-                          value={student.whatsapp}
-                          onChange={(e) => setEditedStudent({ ...student, whatsapp: e.target.value })}
-                          placeholder="Enter WhatsApp number (if different from phone)"
-                          type="tel"
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-gray-900">{student.whatsapp || '-'}</p>
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-gray-500">Address *</Label>
-                      {isEditing ? (
-                        <Textarea
-                          value={student.address}
-                          onChange={(e) => setEditedStudent({ ...student, address: e.target.value })}
-                          placeholder="Enter student's address"
-                        />
-                      ) : (
-                        <p className="text-sm font-medium text-gray-900">{student.address || '-'}</p>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">City</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.city}
-                            onChange={(e) => setEditedStudent({ ...student, city: e.target.value })}
-                            placeholder="City"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.city || '-'}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">State</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.state}
-                            onChange={(e) => setEditedStudent({ ...student, state: e.target.value })}
-                            placeholder="State"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.state || '-'}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">Pincode</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.pincode}
-                            onChange={(e) => setEditedStudent({ ...student, pincode: e.target.value })}
-                            placeholder="Pincode"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.pincode || '-'}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ID Proof Section */}
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <h4 className="font-semibold text-base mb-4 flex items-center gap-2 text-gray-900">
-                    <IdCard className="h-4 w-4 text-gray-500" />
-                    ID Proof
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">ID Proof Type *</Label>
-                        {isEditing ? (
-                          <Select
-                            value={student.idProofType}
-                            onValueChange={(value) => setEditedStudent({ ...student, idProofType: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select ID proof type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="aadhar">Aadhar Card</SelectItem>
-                              <SelectItem value="pan">PAN Card</SelectItem>
-                              <SelectItem value="passport">Passport</SelectItem>
-                              <SelectItem value="voter">Voter ID</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.idProofType || '-'}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-500">ID Proof Number *</Label>
-                        {isEditing ? (
-                          <Input
-                            value={student.idProofNumber}
-                            onChange={(e) => setEditedStudent({ ...student, idProofNumber: e.target.value })}
-                            placeholder="Enter ID proof number"
-                          />
-                        ) : (
-                          <p className="text-sm font-medium text-gray-900">{student.idProofNumber || '-'}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-500">ID Proof Front</p>
-                        <div className="h-48 w-full rounded-lg overflow-hidden border-2 border-gray-200">
-                          <img
-                            src={student.idProofFront || "/placeholder.svg"}
-                            alt="ID Front"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-500">ID Proof Back</p>
-                        <div className="h-48 w-full rounded-lg overflow-hidden border-2 border-gray-200">
-                          <img
-                            src={student.idProofBack || "/placeholder.svg"}
-                            alt="ID Back"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500">Accepted formats: PDF, JPEG, PNG (max 5MB)</p>
-                  </div>
-                </div>
-
-                {/* Terms & Conditions Section */}
-                <div className="space-y-2">
-                  <h3 className="text-base font-semibold text-gray-900 border-b pb-1">Terms & Conditions</h3>
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-500">1. I hereby declare that all the information provided above is true and correct to the best of my knowledge.</p>
-                    <p className="text-xs text-gray-500">2. I understand that any false information provided may result in cancellation of my admission.</p>
-                    <p className="text-xs text-gray-500">3. I agree to abide by all the rules and regulations of the institution.</p>
-                    <p className="text-xs text-gray-500">4. I understand that the institution reserves the right to modify the rules and regulations as deemed necessary.</p>
-                  </div>
-                </div>
-
-                {/* Declaration Section */}
-                <div className="space-y-2">
-                  <h3 className="text-base font-semibold text-gray-900 border-b pb-1">Declaration</h3>
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-500">I hereby declare that I have read and understood all the terms and conditions mentioned above and agree to abide by them.</p>
-                  </div>
-                </div>
-
-                {/* Signature Section */}
-                <div className="space-y-2">
-                  <h3 className="text-base font-semibold text-gray-900 border-b pb-1">Signature</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-500">Student's Signature</p>
-                      <div className="h-16 w-full border-b-2 border-gray-300"></div>
-                      <p className="text-xs text-gray-500">Date: {format(new Date(), "dd/MM/yyyy")}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-500">Authorities Signature & Seal</p>
-                      <div className="h-16 w-full border-b-2 border-gray-300"></div>
-                      <p className="text-xs text-gray-500">Date: {format(new Date(), "dd/MM/yyyy")}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Side - Financial Summary */}
-              <div className="w-3/5 overflow-y-auto p-4 space-y-4 h-[calc(100vh-8rem)]">
-                <div className="bg-white rounded-lg border border-gray-200">
-                  <Tabs defaultValue="admission" className="w-full">
-                    <TabsList className="w-full justify-start border-b rounded-none">
-                      <TabsTrigger value="admission" className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Admission Form
-                      </TabsTrigger>
-                      <TabsTrigger value="passbook" className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4" />
-                        Passbook
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="admission" className="p-4">
-                      <div className="bg-white rounded-lg border border-gray-200 p-6">
-                        <div className="space-y-6">
-                          {/* Header */}
-                          <div className="flex items-start justify-between border-b pb-4">
-                            <div className="flex items-start gap-4">
-                              <div className="h-16 w-16 border-2 border-gray-200 rounded-lg flex items-center justify-center">
-                                <Image className="h-8 w-8 text-gray-400" />
-                              </div>
-                              <div>
-                                <h2 className="text-2xl font-bold text-gray-900">Library Name</h2>
-                                <p className="text-sm text-gray-500">Address of library</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm text-gray-500">Generated on</p>
-                              <p className="text-sm font-medium text-gray-900">{format(new Date(), "MMMM do, yyyy")}</p>
-                            </div>
-                          </div>
-
-                          {/* Student Profile Section */}
-                          <div className="flex gap-24 border-b pb-6">
-                            {/* Profile Photo */}
-                            <div className="flex flex-col items-center">
-                              <div className="w-32 h-40 border-2 border-gray-200 rounded-lg overflow-hidden">
+        <DialogContent className="max-w-7xl w-[95vw] p-0 overflow-hidden">
+          <div className="flex flex-col lg:flex-row h-[90vh]">
+            {/* Left Sidebar - Student Info */}
+            <div className="w-full lg:w-80 bg-gradient-to-b from-blue-600 to-indigo-700 p-6 text-white flex flex-col">
+              <div className="flex-1">
+                <div className="flex flex-col items-center text-center mb-8">
+                  <div className="relative group">
+                    <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-white/20 shadow-xl">
                                 <img
                                   src={student.photo || "/placeholder.svg"}
                                   alt={student.name}
-                                  className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                                 />
                               </div>
+                    <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
+                        <Edit className="h-5 w-5" />
+                      </Button>
                             </div>
-
-                            {/* Student Details */}
-                            <div className="flex-1 flex flex-col items-center justify-center px-8">
-                              <h3 className="text-xl font-semibold text-gray-900 mb-4">{student.name}</h3>
-                              <table className="w-full border-collapse">
-                                <tbody>
-                                  <tr>
-                                    <td className="p-2 border border-gray-200">
-                                      <p className="text-sm text-gray-500">Student ID</p>
-                                      <p className="text-base font-medium text-gray-900">{student.id || '-'}</p>
-                                    </td>
-                                    <td className="p-2 border border-gray-200">
-                                      <p className="text-sm text-gray-500">Monthly Fee</p>
-                                      <p className="text-base font-medium text-gray-900">₹{student.monthlyFee || '-'}</p>
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
                             </div>
+                  <h3 className="text-xl font-bold mt-4">{student.name}</h3>
+                  <p className="text-blue-100">ID: {student.id}</p>
                           </div>
 
-                          {/* Personal Information Section */}
                           <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Personal Information</h3>
-                            <div className="grid grid-cols-2 gap-6">
+                  <div className="bg-white/10 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-blue-100 mb-2">Contact Information</h4>
                               <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Full Name</p>
-                                <p className="text-base font-medium text-gray-900">{student.name}</p>
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start text-white hover:bg-white/20"
+                        onClick={() => window.location.href = `tel:${student.phone}`}
+                      >
+                        <Phone className="h-4 w-4 mr-2" />
+                        <span className="text-sm">{student.phone}</span>
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start text-white hover:bg-white/20"
+                        onClick={() => window.open(`https://wa.me/${student.whatsapp || student.phone}`, '_blank')}
+                      >
+                        <svg 
+                          viewBox="0 0 24 24" 
+                          width="16" 
+                          height="16" 
+                          fill="currentColor"
+                          className="h-4 w-4 mr-2"
+                        >
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                        </svg>
+                        <span className="text-sm">{student.whatsapp || student.phone}</span>
+                      </Button>
+                            </div>
+                          </div>
+
+                  <div className="bg-white/10 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-blue-100 mb-2">Seat Information</h4>
+                              <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Sofa className="h-4 w-4" />
+                        <span>Seat No: {student.seatNo}</span>
                               </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Father's/Husband's Name</p>
-                                <p className="text-base font-medium text-gray-900">{student.fatherName || '-'}</p>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4" />
+                        <span>Due Date: {format(new Date(student.dueDate), "dd MMM yyyy")}</span>
                               </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Date of Birth</p>
-                                <p className="text-base font-medium text-gray-900">{student.dob ? format(new Date(student.dob), "MMMM do, yyyy") : '-'}</p>
                               </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Gender</p>
-                                <p className="text-base font-medium text-gray-900">{student.gender || '-'}</p>
                               </div>
                             </div>
                           </div>
 
-                          {/* Academic Information Section */}
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Academic Information</h3>
-                            <div className="grid grid-cols-2 gap-6">
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Seat Number</p>
-                                <p className="text-base font-medium text-gray-900">{student.seatNo || '-'}</p>
+              <div className="pt-4 border-t border-white/10">
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20"
+                  onClick={() => window.open(`https://wa.me/${student.whatsapp || student.phone}`, '_blank')}
+                >
+                  Send Reminder
+                </Button>
                               </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Admission Date</p>
-                                <p className="text-base font-medium text-gray-900">{student.admissionDate ? format(new Date(student.admissionDate), "MMMM do, yyyy") : '-'}</p>
                               </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Course</p>
-                                <p className="text-base font-medium text-gray-900">{student.course || '-'}</p>
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Shift</p>
-                                <p className="text-base font-medium text-gray-900 pl-0">{student.shift || '-'}</p>
-                              </div>
-                            </div>
-                          </div>
 
-                          {/* Contact Information Section */}
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Contact Information</h3>
-                            <div className="grid grid-cols-2 gap-6">
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Email Address</p>
-                                <p className="text-base font-medium text-gray-900">{student.email || '-'}</p>
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Phone Number</p>
-                                <p className="text-base font-medium text-gray-900">{student.phone || '-'}</p>
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">WhatsApp Number</p>
-                                <p className="text-base font-medium text-gray-900">{student.whatsapp || '-'}</p>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <p className="text-sm text-gray-500">Address</p>
-                              <p className="text-base font-medium text-gray-900">{student.address || '-'}</p>
-                            </div>
-                            <div className="grid grid-cols-3 gap-6">
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">City</p>
-                                <p className="text-base font-medium text-gray-900">{student.city || '-'}</p>
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">State</p>
-                                <p className="text-base font-medium text-gray-900">{student.state || '-'}</p>
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">Pincode</p>
-                                <p className="text-base font-medium text-gray-900">{student.pincode || '-'}</p>
-                              </div>
-                            </div>
-                          </div>
+            {/* Main Content */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="p-6 border-b">
+                <h2 className="text-2xl font-bold">Student Passbook</h2>
+                <p className="text-muted-foreground">Financial details and payment history</p>
+              </div>
 
-                          {/* ID Proof Section */}
-                          <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">ID Proof</h3>
-                            <div className="grid grid-cols-2 gap-6">
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">ID Proof Type</p>
-                                <p className="text-base font-medium text-gray-900">{student.idProofType || '-'}</p>
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">ID Proof Number</p>
-                                <p className="text-base font-medium text-gray-900">{student.idProofNumber || '-'}</p>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-6">
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">ID Proof Front</p>
-                                <div className="h-48 w-full rounded-lg overflow-hidden border-2 border-gray-200">
-                                  <img
-                                    src={student.idProofFront || "/placeholder.svg"}
-                                    alt="ID Front"
-                                    className="h-full w-full object-cover"
-                                  />
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <p className="text-sm text-gray-500">ID Proof Back</p>
-                                <div className="h-48 w-full rounded-lg overflow-hidden border-2 border-gray-200">
-                                  <img
-                                    src={student.idProofBack || "/placeholder.svg"}
-                                    alt="ID Back"
-                                    className="h-full w-full object-cover"
-                          />
-                        </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Terms & Conditions Section */}
-                          <div className="space-y-2">
-                            <h3 className="text-base font-semibold text-gray-900 border-b pb-1">Terms & Conditions</h3>
-                            <div className="space-y-1">
-                              <p className="text-xs text-gray-500">1. I hereby declare that all the information provided above is true and correct to the best of my knowledge.</p>
-                              <p className="text-xs text-gray-500">2. I understand that any false information provided may result in cancellation of my admission.</p>
-                              <p className="text-xs text-gray-500">3. I agree to abide by all the rules and regulations of the institution.</p>
-                              <p className="text-xs text-gray-500">4. I understand that the institution reserves the right to modify the rules and regulations as deemed necessary.</p>
-                            </div>
-                          </div>
-
-                          {/* Declaration Section */}
-                          <div className="space-y-2">
-                            <h3 className="text-base font-semibold text-gray-900 border-b pb-1">Declaration</h3>
-                            <div className="space-y-1">
-                              <p className="text-xs text-gray-500">I hereby declare that I have read and understood all the terms and conditions mentioned above and agree to abide by them.</p>
-                            </div>
-                          </div>
-
-                          {/* Signature Section */}
-                          <div className="space-y-2">
-                            <h3 className="text-base font-semibold text-gray-900 border-b pb-1">Signature</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-1">
-                                <p className="text-xs text-gray-500">Student's Signature</p>
-                                <div className="h-16 w-full border-b-2 border-gray-300"></div>
-                                <p className="text-xs text-gray-500">Date: {format(new Date(), "dd/MM/yyyy")}</p>
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-xs text-gray-500">Authorities Signature & Seal</p>
-                                <div className="h-16 w-full border-b-2 border-gray-300"></div>
-                                <p className="text-xs text-gray-500">Date: {format(new Date(), "dd/MM/yyyy")}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="passbook" className="p-4">
-                      <Tabs defaultValue="total-due" className="w-full">
-                        <TabsList className="w-full justify-start border-b rounded-none">
-                          <TabsTrigger value="total-due" className="flex items-center gap-2">
-                            Total Due <Badge variant="destructive" className="ml-1">₹23,571</Badge>
-                          </TabsTrigger>
-                          <TabsTrigger value="total-collection" className="flex items-center gap-2">
-                            Total Collection <Badge variant="outline" className="ml-1">₹15,000</Badge>
-                          </TabsTrigger>
-                          <TabsTrigger value="add-dues">Add Dues</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="total-due" className="p-4">
-                          <div className="bg-white rounded-lg border border-gray-200 p-4">
-                            <h4 className="font-semibold text-base mb-4">Due Summary</h4>
-                            <div className="space-y-3">
-                              <div className="flex justify-between">
-                                <span className="text-gray-500">Total Dues:</span>
-                                <span className="font-medium text-red-600">₹23,571</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-500">Last Payment Date:</span>
-                                <span className="font-medium text-gray-900">15 Apr 2024</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-500">Next Due Date:</span>
-                                <span className="font-medium text-gray-900">15 May 2024</span>
-                              </div>
-                            </div>
-                            <div className="mt-6">
-                              <h4 className="font-semibold text-base mb-4">Due Details</h4>
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Description</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {[
-                                    { date: "2024-05-15", amount: 5000, status: "pending", description: "Monthly Fee" },
-                                    { date: "2024-04-15", amount: 5000, status: "pending", description: "Monthly Fee" },
-                                    { date: "2024-03-15", amount: 5000, status: "pending", description: "Monthly Fee" },
-                                    { date: "2024-02-15", amount: 5000, status: "pending", description: "Monthly Fee" },
-                                    { date: "2024-01-15", amount: 3571, status: "pending", description: "Monthly Fee" },
-                                  ].map((due, index) => (
-                                    <TableRow key={index}>
-                                      <TableCell>{format(new Date(due.date), "dd MMM yyyy")}</TableCell>
-                                      <TableCell>₹{due.amount}</TableCell>
-                                      <TableCell>
-                                        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                                          {due.status}
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell>{due.description}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          </div>
-                        </TabsContent>
-                        <TabsContent value="total-collection" className="p-4">
-                          <div className="bg-white rounded-lg border border-gray-200 p-4">
-                            <h4 className="font-semibold text-base mb-4">Collection History</h4>
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Date</TableHead>
-                                  <TableHead>Amount</TableHead>
-                                  <TableHead>Status</TableHead>
-                                  <TableHead>Payment Method</TableHead>
-                                  <TableHead>Description</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {[
-                                  { date: "2024-04-15", amount: 5000, status: "paid", method: "UPI", description: "Monthly Fee" },
-                                  { date: "2024-03-15", amount: 5000, status: "paid", method: "Bank Transfer", description: "Monthly Fee" },
-                                  { date: "2024-02-15", amount: 5000, status: "paid", method: "Cash", description: "Monthly Fee" },
-                                ].map((payment, index) => (
-                                  <TableRow key={index}>
-                                    <TableCell>{format(new Date(payment.date), "dd MMM yyyy")}</TableCell>
-                                    <TableCell>₹{payment.amount}</TableCell>
-                                    <TableCell>
-                                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                        {payment.status}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell>{payment.method}</TableCell>
-                                    <TableCell>{payment.description}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </TabsContent>
-                        <TabsContent value="add-dues" className="p-4">
-                          <div className="bg-white rounded-lg border border-gray-200 p-4">
-                            <h4 className="font-semibold text-base mb-4">Add New Dues</h4>
-                            <div className="space-y-4">
-                              <div className="space-y-2">
-                                <Label>Amount</Label>
-                                <Input type="number" placeholder="Enter amount" />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Due Date</Label>
-                                <Input type="date" />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Description</Label>
-                                <Textarea placeholder="Enter description" />
-                              </div>
-                              <Button className="w-full">Add Dues</Button>
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </TabsContent>
-                  </Tabs>
+              {/* Basic Information */}
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Student ID</p>
+                    <p className="font-medium">{student.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Name</p>
+                    <p className="font-medium">{student.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{student.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="font-medium">{student.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Seat Number</p>
+                    <p className="font-medium">{student.seatNo || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Shift</p>
+                    <p className="font-medium">{student.shift || '-'}</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Footer */}
-            <div className="bg-gray-50 border-t px-4 py-3 flex justify-end gap-3">
-              {isEditing ? (
-                <>
-                  <Button variant="outline" size="sm" onClick={handleCancel}>
-                    Cancel
-                  </Button>
-                  <Button size="sm" onClick={handleSave}>
-                    Save Changes
-                  </Button>
-                </>
-              ) : null}
+              {/* Financial Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-red-600 font-medium">Total Due</p>
+                      <p className="text-2xl font-bold text-red-700">
+                        ₹{dues
+                          .filter(due => due.status === "pending")
+                          .reduce((sum, due) => sum + due.amount, 0)
+                          .toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-600 font-medium">Total Paid</p>
+                      <p className="text-2xl font-bold text-green-700">
+                        ₹{dues
+                          .filter(due => due.status === "paid")
+                          .reduce((sum, due) => sum + due.amount, 0)
+                          .toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-600 font-medium">Total Transactions</p>
+                      <p className="text-2xl font-bold text-blue-700">
+                        {dues.length}
+                      </p>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <Receipt className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Tabs defaultValue="due" className="flex-1">
+                <TabsList className="w-full justify-start border-b rounded-none h-12 px-6">
+                  <TabsTrigger value="due" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                    Due
+                  </TabsTrigger>
+                  <TabsTrigger value="collection" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                    Collection
+                  </TabsTrigger>
+                  <TabsTrigger value="add-due" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
+                    Add Due
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="due" className="flex-1">
+                  {/* Due Tab Content */}
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">Due Payments</h3>
+                      <Button variant="outline" size="sm" onClick={() => setShowCollectionForm(true)}>
+                        Record Payment
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      {dues.map((due, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                          <div className="flex items-center gap-4">
+                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                              due.status === 'paid' ? 'bg-green-100' : 'bg-red-100'
+                            }`}>
+                              {due.status === 'paid' ? (
+                                <CheckCircle2 className="h-5 w-5 text-green-600" />
+                              ) : (
+                                <AlertCircle className="h-5 w-5 text-red-600" />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium">{due.category}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Due: {format(new Date(due.dueDate), "dd MMM yyyy")}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">₹{due.amount.toLocaleString('en-IN')}</p>
+                            <div className="flex items-center gap-2">
+                              <p className={`text-sm ${
+                                due.status === 'paid' ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {due.status === 'paid' ? 'Paid' : 'Pending'}
+                              </p>
+                              {due.status !== 'paid' && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleCollectionClick(due)}
+                                  className="h-6 px-2 text-xs"
+                                >
+                                  Pay Now
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="collection" className="flex-1">
+                  {/* Collection Tab Content */}
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold">Payment History</h3>
+                      <Button variant="outline" size="sm" onClick={() => setShowCollectionForm(true)}>
+                        Record Payment
+                      </Button>
+                    </div>
+                    <div className="space-y-4">
+                      {collections.map((collection, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 bg-white rounded-lg border">
+                          <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                              <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{collection.category}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Paid on: {format(new Date(collection.date), "dd MMM yyyy")}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">₹{collection.amount.toLocaleString('en-IN')}</p>
+                            <p className="text-sm text-green-600">{collection.paymentMode}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="add-due" className="flex-1">
+                  {/* Add Due Tab Content */}
+                  <div className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">Add New Due</h3>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Category</Label>
+                          <Select>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="monthly">Monthly Fee</SelectItem>
+                              <SelectItem value="registration">Registration Fee</SelectItem>
+                              <SelectItem value="late">Late Fee</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Amount</Label>
+                          <Input type="number" placeholder="Enter amount" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Due Date</Label>
+                        <Input type="date" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Input placeholder="Enter description" />
+                      </div>
+                      <Button className="w-full">Add Due</Button>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </DialogContent>
@@ -1377,8 +1174,93 @@ const StudentsPage: React.FC = () => {
     );
   };
 
-  const handleCardClick = (route: string) => {
-    navigate(route);
+  // Add CollectionFormDialog component
+  const CollectionFormDialog: React.FC = () => {
+    if (!selectedDue) return null;
+
+    return (
+      <Dialog open={showCollectionForm} onOpenChange={setShowCollectionForm}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Record Collection</DialogTitle>
+            <DialogDescription>
+              Record payment for {selectedDue.category} due on {format(new Date(selectedDue.dueDate), "dd MMM yyyy")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Due Amount</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  <span className="text-lg font-semibold text-red-600">₹{selectedDue.amount.toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+              <div className="space-y-2">
+                <Label>Late Days</Label>
+                <div className="p-2 bg-muted rounded-md">
+                  <span className="text-lg font-semibold text-red-600">{selectedDue.lateDays} days</span>
+                                    </div>
+                                      </div>
+                                    </div>
+
+                          <div className="space-y-2">
+              <Label>Collection Amount</Label>
+              <Input
+                type="number" 
+                placeholder="Enter amount"
+                value={collectionForm.amount}
+                onChange={(e) => setCollectionForm(prev => ({ ...prev, amount: e.target.value }))}
+              />
+                </div>
+
+                          <div className="space-y-2">
+              <Label>Payment Mode</Label>
+              <Select
+                value={collectionForm.paymentMode}
+                onValueChange={(value) => setCollectionForm(prev => ({ ...prev, paymentMode: value }))}
+              >
+                              <SelectTrigger>
+                  <SelectValue placeholder="Select payment mode" />
+                              </SelectTrigger>
+                              <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="upi">UPI</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+            <div className="space-y-2">
+              <Label>Collection Date</Label>
+              <Input
+                type="date"
+                value={collectionForm.date}
+                onChange={(e) => setCollectionForm(prev => ({ ...prev, date: e.target.value }))}
+              />
+                        </div>
+
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input
+                placeholder="Enter description"
+                value={collectionForm.description}
+                onChange={(e) => setCollectionForm(prev => ({ ...prev, description: e.target.value }))}
+              />
+                        </div>
+                      </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCollectionForm(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCollectionSubmit}>
+              Record Collection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   if (isLoading) {
@@ -1397,62 +1279,43 @@ const StudentsPage: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Enhanced Header Section */}
-        <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 shadow-lg">
-          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
-          <div className="relative z-10">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold text-white">STUDENT MANAGEMENT</h1>
-                <p className="text-blue-100">Manage student profiles and access</p>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept=".csv,.xlsx,.xls"
-                  className="hidden"
-                />
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="bg-white/10 text-white hover:bg-white/20 border-white/20 hover:border-white/30"
-                  onClick={handleImportClick}
-                  disabled={isImporting}
-                >
-                  {isImporting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Importing...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Import Student
-                    </>
-                  )}
-                </Button>
-                <Button 
-                  size="lg"
-                  className="bg-white/10 text-white hover:bg-white/20 border-white/20 hover:border-white/30"
-                  onClick={handleSendNotification}
-                  disabled={isSendingNotification}
-                >
-                  {isSendingNotification ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-2 h-4 w-4" />
-                      Send Notification
-                    </>
-                  )}
-                </Button>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold">Student Management</h1>
+              <p className="text-muted-foreground">
+                Manage and track all student records and activities
+              </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+            />
+            <Button 
+              variant="outline" 
+              size="default"
+              onClick={handleImportClick}
+              disabled={isImporting}
+              className="flex items-center gap-2"
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Import Students
+                </>
+              )}
+            </Button>
           </div>
         </div>
 
@@ -1486,60 +1349,45 @@ const StudentsPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Student Table with Search and Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Students</CardTitle>
-            <CardDescription>
-              Manage and view all student records
+        {/* Enhanced Student Table */}
+        <Card className="border-none shadow-lg">
+          <CardHeader className="border-b pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                  Active Students
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  View all active student records
             </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center py-4 gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search students by name, ID, email, or phone..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusTypes.map((status) => (
-                      <SelectItem key={status.value} value={status.value}>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${
-                            status.value === 'active' ? 'bg-green-500' :
-                            status.value === 'pending' ? 'bg-yellow-500' :
-                            status.value === 'suspended' ? 'bg-red-500' :
-                            status.value === 'inactive' ? 'bg-gray-500' :
-                            status.value === 'graduated' ? 'bg-blue-500' :
-                            status.value === 'on_leave' ? 'bg-purple-500' :
-                            'bg-gray-300'
-                          }`} />
-                          {status.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
-            <div className="rounded-md border">
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="relative flex-1 max-w-sm">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search active students..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-full"
+                />
+              </div>
+                        </div>
+              </div>
+            <div className="rounded-md">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="bg-gradient-to-r from-blue-50 to-indigo-50 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100">
                     <TableHead className="w-[80px] border-r border-dashed">Photo</TableHead>
                     <TableHead className="w-[120px] border-r border-dashed">Student ID</TableHead>
                     <TableHead className="w-[200px] border-r border-dashed">Name</TableHead>
                     <TableHead className="w-[100px] border-r border-dashed">Seat No</TableHead>
                     <TableHead className="w-[150px] border-r border-dashed">Last Active</TableHead>
                     <TableHead className="w-[150px] border-r border-dashed">Due Date</TableHead>
+                    <TableHead className="w-[150px] border-r border-dashed">Shift</TableHead>
                     <TableHead className="w-[150px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1547,12 +1395,12 @@ const StudentsPage: React.FC = () => {
                   {filteredAndSortedStudents.map((student) => (
                     <TableRow 
                       key={student.id}
-                      onClick={() => setSelectedStudent(student)}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      className="cursor-pointer hover:bg-blue-50/50 transition-colors group"
+                      onClick={() => handleRowClick(student)}
                     >
                       <TableCell className="py-3 border-r border-dashed">
                         <div className="flex items-center justify-center">
-                          <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-gray-200">
+                          <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-gray-200 group-hover:border-primary/50 transition-colors">
                             <img
                               src={student.photo || "/placeholder.svg"}
                               alt={student.name}
@@ -1561,22 +1409,70 @@ const StudentsPage: React.FC = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="py-3 border-r border-dashed">{student.id}</TableCell>
-                      <TableCell className="py-3 border-r border-dashed">{student.name}</TableCell>
-                      <TableCell className="py-3 border-r border-dashed">{student.seatNo || '-'}</TableCell>
-                      <TableCell className="py-3 border-r border-dashed">{student.lastActive}</TableCell>
                       <TableCell className="py-3 border-r border-dashed">
+                        <span className="font-medium text-primary">{student.id}</span>
+                      </TableCell>
+                      <TableCell className="py-3 border-r border-dashed">
+                        <div>
+                          <p className="font-medium">{student.name}</p>
+                          <p className="text-sm text-muted-foreground">{student.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3 border-r border-dashed">
+                        <Badge variant="outline" className="font-medium">
+                          {student.seatNo || '-'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3 border-r border-dashed">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">{student.lastActive}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3 border-r border-dashed">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">
                         {student.dueDate ? format(new Date(student.dueDate), "MMM dd, yyyy") : '-'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3 border-r border-dashed" onClick={(e) => e.stopPropagation()}>
+                        {renderShiftCell(student)}
                       </TableCell>
                       <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center gap-2">
                           <Button 
-                            variant="default" 
+                            variant="ghost" 
                             size="sm" 
                             onClick={() => setSelectedStudent(student)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            className="hover:bg-primary/10"
                           >
-                            View Details
+                            <CreditCard className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => window.location.href = `tel:${student.phone}`}
+                            className="hover:bg-green-100 text-green-600"
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => window.open(`https://wa.me/${student.whatsapp || student.phone}`, '_blank')}
+                            className="hover:bg-green-100 text-green-600"
+                          >
+                            <svg 
+                              viewBox="0 0 24 24" 
+                              width="16" 
+                              height="16" 
+                              fill="currentColor"
+                              className="h-4 w-4"
+                            >
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
                           </Button>
                         </div>
                       </TableCell>
@@ -1587,8 +1483,15 @@ const StudentsPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
         <StudentDetailsModal />
         <PhotoModal />
+        <CollectionFormDialog />
+        <StudentProfileDialog 
+          student={selectedStudent}
+          open={showProfile}
+          onOpenChange={setShowProfile}
+        />
       </div>
     </DashboardLayout>
   );
